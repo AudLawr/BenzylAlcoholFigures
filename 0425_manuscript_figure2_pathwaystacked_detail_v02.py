@@ -5,7 +5,7 @@ Created on Thu Sep 25 15:43:40 2025
 @author: audlaw
 """
 
-#this script plots figures 1, and the exp 2 components of S7-13
+#this script plots figures 2, and the exp 2 components of S7-13
 
 from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
