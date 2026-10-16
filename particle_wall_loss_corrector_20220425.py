@@ -5,7 +5,8 @@ Created on Wed Feb  7 10:54:16 2024
 @author: Willis Lab
 """
 
-## read data
+#script adapted from Tucker Melles with contributions from Huiying Luo
+
 import pandas as pd
 import glob
 from datetime import datetime, timedelta
