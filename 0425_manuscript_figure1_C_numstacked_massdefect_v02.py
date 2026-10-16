@@ -14,10 +14,9 @@ import numpy as np
 import pandas as pd
 from scipy.optimize import curve_fit
 import re
-import matplotlib.cm as cm
 from matplotlib.lines import Line2D
 from matplotlib.ticker import ScalarFormatter
-from matplotlib.ticker import FuncFormatter
+
 
 mpl.rcParams.update({'font.size': 20})
 titles = "0425" #this is to distinguish experiments
@@ -137,7 +136,7 @@ NH4_ppb_df.rename(columns={'date_time': 'time'}, inplace=True)
 NH4_ppb_df.set_index('time', inplace=True)
 
 #resample on 1min, calculate the mean for prelighton, then subtract from dataframe to account for starting concentrations before oxidation
-NH4_ppb_df = NH4_ppb_df.resample('T').mean()   #resamples to get the same time index for NH4 and ptr data
+NH4_ppb_df = NH4_ppb_df.resample('min').mean()   #resamples to get the same time index for NH4 and ptr data
 NH4_ppb_df_pre_light_on = NH4_ppb_df_pre_light_on.drop('date_time', axis=1)  #droping the time column so I can find the mean
 NH4_ppb_df_pre_light_on_mean = NH4_ppb_df_pre_light_on.mean() 
 NH4_ppb_df_deltaC = NH4_ppb_df-NH4_ppb_df_pre_light_on_mean   #making dataframe change in carbon relative to lightson (deltaC)
@@ -154,7 +153,7 @@ PTR_ppb_df = PTR_ppb_df.loc[PTR_ppb_df['t_start'] >=lighton]
 PTR_ppb_df.rename(columns={'t_start': 'time'}, inplace=True)
 PTR_ppb_df.set_index('time', inplace=True)
 
-PTR_ppb_df = PTR_ppb_df.resample('T').mean()
+PTR_ppb_df = PTR_ppb_df.resample('min').mean()
 PTR_ppb_df_pre_light_on = PTR_ppb_df_pre_light_on.drop('t_start', axis=1)
 PTR_ppb_df_pre_light_on_mean = PTR_ppb_df_pre_light_on.mean()
 PTR_ppb_df_deltaC = PTR_ppb_df-PTR_ppb_df_pre_light_on_mean 
@@ -334,6 +333,8 @@ VWLdf_filtered.to_csv("C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research
 #************************************************************
 
 #adding soa info to get pp carbon
+
+
 '''' this is for scents2 scripts
 ams_df = ams_df.loc[~ams_df.isin([-9999]).any(axis=1)].copy() #removes rows that have the LDO flag 
 ams_df['datetime'] = pd.to_datetime(ams_df[' AMS_MidPointTime Datetime'])
@@ -354,7 +355,7 @@ to_merge_aerosol = merged_df_aerosol[['OC (ppb)','Time']]
 to_merge_aerosol = to_merge_aerosol.set_index('Time')
 
 #******************************************************************************
-#i dont know what this does, but if i take it out, the whole thing breaks 
+#i dont know what this does, but if i take it out, the whole thing breaks
 #******************************************************************************
 
 merged_df_corr = merged_df_corr.reset_index()
@@ -370,8 +371,6 @@ merged_df_corr = merged_df_corr.drop('time', axis=1)#gets rid of time axis
 
 
 #%%
-#This section groups products by carbon number based off their formulas
-
 c_num_list = []
 c_num_list = c_num_finder(merged_df_corr, c_num_list)#uses function to find the number of carbon for each 
 c_num_list = [float(item) for item in c_num_list]
@@ -400,7 +399,7 @@ df = merged_df_corr.copy()
 
 
 def is_valid_species(col):
-    # formulas with format "mass;(formula)+_ppb_total"
+    # formulas with format "mass;(...formula...)+_ppb_total"
     NH4_pattern = r"^\d+\.\d+;.*_ppb_total$"
     # formulas with format "mXX_formula_ppb"
     PTR_pattern = r"^m\d+_.+_ppb$"
@@ -420,7 +419,7 @@ df_filtered = merged_df_corr[species_cols].copy()
 
 
 carbon_groups = {}
-primary = {"C7H8O_ppb": "Benzyl alcohol"} #primary VOC
+primary = {"C7H8O_ppb": "Benzyl alcohol"}
 for col in species_cols:
     cnum = get_carbon_number(col)
     if cnum is not None:
@@ -474,7 +473,7 @@ for cnum, cols in sorted(carbon_groups.items()):
         group_to_species[label] = cols
 
 
-#merged the GP with the PP carbon, so that SOA is added to fig 1a
+#merged the GP with the PP carbon
 carbon_grouped_with_SOA = pd.merge(carbon_grouped_df, to_merge_aerosol,
     left_index=True, right_index=True, how="inner")
 
@@ -486,9 +485,8 @@ labels = carbon_grouped_with_SOA.columns
 carbon_grouped_df = carbon_grouped_df.dropna(axis=1, how="all")
 carbon_grouped_df = carbon_grouped_df.loc[:, (carbon_grouped_df != 0).any(axis=0)]
 
-
-
 #This section takes the carbon grouped df and multiplies each section by carbon # to get ppbC
+
 #BnOH multiplication
 for species, label in primary.items():
     if species in df_filtered.columns:
@@ -496,7 +494,7 @@ for species, label in primary.items():
 
 #C# group multiplication
 for cnum, cols in sorted(carbon_groups.items()):
-    cols = [c for c in cols if c not in primary]  # to avoid double counting
+    cols = [c for c in cols if c not in primary]  # avoid double counting
     if cols:
         summed = df_filtered[cols].sum(axis=1)
         carbon_grouped_df[f"C{cnum}"] = summed * cnum  # convert to ppbC
@@ -507,12 +505,12 @@ carbon_grouped_df["OH_exp"] = OH_exp
 carbon_grouped_df = carbon_grouped_df.set_index("OH_exp")
 
 #***************************************************
-#this makes sure the SOA is aligned correctly!!!
+#this makes sure the SOA is aligned correctly
 #***************************************************
 # Make a temporary df with datetime + SOA
 soa_tmp = ppb_C_df_with_aerosol[["OC (ppb)"]].copy()
-soa_tmp = soa_tmp.reset_index().rename(columns={"index": "Time"})
-
+soa_tmp = soa_tmp.reset_index().rename(columns={"time": "Time"})
+#%%
 # Make a datetime column for gas-phase species
 gas_tmp = carbon_grouped_df.copy()
 gas_tmp = gas_tmp.reset_index()  # OH_exp is index, datetime is lost if not kept
@@ -534,7 +532,7 @@ carbon_grouped_df = carbon_grouped_df.iloc[:-1]
 
 
 
-# Replace zeros with NaN, then interpolate only those NaNs. The SOA column gets dropped later and SOA_i is plotted but I couldnt figure out how to make that work without keeping the SOA column here
+# Replace zeros with NaN, then interpolate only those NaNs
 carbon_grouped_df["SOA"] = carbon_grouped_df["SOA"].replace(0, np.nan)
 carbon_grouped_df["SOA_i"] = carbon_grouped_df["SOA"].interpolate(method='linear')
 
@@ -553,16 +551,32 @@ carbon_grouped_df = carbon_grouped_df[cols]
 stackplot_df = carbon_grouped_df.copy()
 stackplot_df[gas_phase_cols] = stackplot_df[gas_phase_cols].fillna(0)
 
+# Diagnostics
+print("Interpolated SOA_i count:", carbon_grouped_df['SOA_i'].notna().sum())
+print("Masked rows:", mask.sum())
+
+
+
+# --- Diagnostics (helpful to print after running) ---
+print("Total rows:", len(carbon_grouped_df))
+print("SOA original: NaNs =", carbon_grouped_df["SOA"].isna().sum())
+print("SOA_i (interpolated): NaNs =", carbon_grouped_df["SOA_i"].isna().sum())
+print("Rows where all gas-phase are NaN/zero (mask.sum):", mask.sum())
+print("Example rows (masked rows):")
+print(carbon_grouped_df.loc[mask, ["SOA", "SOA_i"]].head())
+
 
 
 stackplot_df = carbon_grouped_df.copy()
 stackplot_df[gas_phase_cols] = stackplot_df[gas_phase_cols].fillna(0) # Fill gas-phase NaNs with 0 for stacking
-stackplot_df["SOA_i"] = stackplot_df["SOA_i"].fillna(method='ffill').fillna(method='bfill')# Create plotting-friendly SOA_i (interpolated) to avoid NaN gaps
+stackplot_df["SOA_i"] = stackplot_df["SOA_i"].ffill().bfill()# Create plotting-friendly SOA_i (interpolated) to avoid NaN gaps
 plot_columns = gas_phase_cols + ["SOA"] # define columns to plot: gas-phase + SOA_i only
 
-#this masks SOA_i where all gas-phase species are zero, so that it doesnt interpolate across gas phase zeros
-mask = (stackplot_df[gas_phase_cols] == 0).all(axis=1)  # True where all gas-phase = 0
-stackplot_df.loc[mask, "SOA_i"] = 0  # or np.nan, depending on whether you want stackplot to ignore it
+#Mask SOA_i_plot where all gas-phase species are zero
+mask = (stackplot_df[gas_phase_cols] == 0).all(axis=1)  
+stackplot_df.loc[mask, "SOA_i"] = 0  
+
+
 
 #%%
 #section for loading in the relative errors
@@ -577,12 +591,12 @@ ppb_C_df_with_aerosol_with_OH["OH_exp"] = OH_exp_for_aerosol
 ppb_C_df_with_aerosol_with_OH = ppb_C_df_with_aerosol_with_OH.set_index("OH_exp")
 
 #propagate errors at the last OH exposure point
-last_oh_exp = ppb_C_df_with_aerosol_with_OH.index[-1]
+last_oh_exp = ppb_C_df_with_aerosol_with_OH.index[-1] 
 
 
-group_errors = {}      #absolute errors
-group_err_rel = {}     #relative errors
-group_contribs = {}    #individual abs errors
+group_errors = {}    
+group_err_rel = {}    
+group_contribs = {}  
 
 for group, species_list in group_to_species.items():
     variances = []
@@ -607,7 +621,7 @@ for group, species_list in group_to_species.items():
         group_rel_error = group_abs_error / group_total if group_total != 0 else np.nan
         group_err_rel[group] = group_rel_error
 
-#this shows the errors for each group
+# Example: inspect
 for group in group_contribs:
     print(f"Group: {group}")
     for sp, err in group_contribs[group].items():
@@ -621,14 +635,23 @@ if "SOA" in carbon_grouped_df.columns:
     group_errors["SOA"] = last_soa * 0.4
     
 #manually adding in SOA error based off of what tucker said shantanu said the error was (40%)
-if "SOA_i" in carbon_grouped_df.columns:
+if "SOA_i" in carbon_grouped_df.columns: #_i is the interpolated SOA
     last_soa = carbon_grouped_df.loc[carbon_grouped_df.index[-1], "SOA_i"]
     group_errors["SOA_i"] = last_soa * 0.4
     
+'''           
+#this just shows what the errors are for each group
+for group in carbon_grouped_df.columns:
+    if group in group_errors:
+        val = carbon_grouped_df.loc[last_idx, group]
+        err = group_errors[group]
+        print(f"{group}: {val:.3f} ± {err:.3f}")
+'''
 #%%
-#Here is where we do logistics setup for figure 1 (colors, markers, caluclating exact mass and OSc)
 
-#make a color dictionary for carbon# for stackedplot
+
+#make a color dictionary for carbon# stackedplot
+
 colors_number_stacked = {
     "Benzyl alcohol": "k",
     "SOA": "gray",
@@ -639,7 +662,7 @@ colors_number_stacked = {
     "C6": "#C97137",
     "C7": "#F1740D" }
 
-#color dictionary if you want to color by assigned pathway for fig1b
+#color dictionary if you want to color by assigned pathway
 colors_pathway = {
     "Benzyl alcohol": "#000000",
     "BnAld_VWL": "#B83030",
@@ -649,7 +672,7 @@ colors_pathway = {
     "Unassigned GP Decomp Products": "#D4D4D4", 
     "BPR Ring-retaining": "#E28113"}
 
-#dictionary for coloring by phase
+#dictionary for coloring by p hase
 phase_colors = {"gas phase": '#AD6A42',
                 "Benzyl alcohol": "k",
                 "particle phase": 'grey'}
@@ -667,7 +690,7 @@ groups_gp = {
     "BPR Frag": ['106.049870;(NH4)C3H4O3+_ppb_total', 'm85_C4H4O2H_ppb', '118.049870;(NH4)C4H4O3+_ppb_total', '122.044784;(NH4)C3H4O4+_ppb_total', '134.044784;(NH4)C4H4O4+_ppb_total', 
                    '136.060434;(NH4)C4H6O4+_ppb_total', '168.050263;(NH4)C4H6O6+_ppb_total', '132.065520;(NH4)C5H6O3+_ppb_total',
                    '148.060434;(NH4)C5H6O4+_ppb_total', '150.076084;(NH4)C5H8O4+_ppb_total', '174.076084;(NH4)C7H8O4+_ppb_total'],
-    "Unassigned GP Decomp Products": ['m45_C2H4OH_ppb', 'm61_C2H4O2H_ppb', 'm59_C3H6OH_ppb', 'm73_C3H4O2H_ppb',
+    "Unassigned GP Decomp Products": ['m45_C2H4OH_ppb', 'm61_C2H4O2H_ppb', 'm59_C3H6OH_ppb', 'm73_C3H4O2H_ppb', 
                    '120.065520;(NH4)C4H6O3+_ppb_total', '134.081170;(NH4)C5H8O3+_ppb_total']}
 
 #particle phase groups
@@ -697,33 +720,29 @@ all_species = gp_species + eesi_species + bnoh
 #now we gotta calculate the molecular mass from the formula
 atomic_weights = {'C': 12.0107, 'H': 1.0079, 'O': 15.9994, 'N': 14.0067}
 def get_ratios_and_mass(col_header):
-    """
-    Parses a chemical formula from a column header, including specific groups like NO2,
-    ignoring NH4 and Na adducts, and calculates O/C, H/C, and approximate mass.
-    """
+    
     counts = {'C':0, 'H':0, 'O':0, 'N':0, 'Na':0}
     mass = 0
 
-    #drop the ions (Na and NH4)
     adduct_matches = re.findall(r'\(([A-Za-z0-9]+)\)', col_header)
     for adduct in adduct_matches:
         adduct_upper = adduct.upper()
         if adduct_upper in ['NH4', 'NA']:
             continue  # skip ammonium and sodium
-        #include other adducts like NO2
+        # parse other adducts like NO2
         elems = re.findall(r'([A-Z][a-z]*)(\d*)', adduct)
         for el, num in elems:
             num = int(num) if num else 1
             counts[el] += num
 
-    #find the main formula starting with C
+    
     match = re.search(r'C[A-Za-z0-9]*', col_header)
     if not match:
         return None, None, None
 
     formula = re.sub(r'[^A-Za-z0-9]', '', match.group(0))
 
-    #count all the atoms
+    
     matches = re.findall(r'([A-Z][a-z]*)(\d*)', formula)
     seen = set()
     for i, (el, num) in enumerate(matches):
@@ -736,12 +755,12 @@ def get_ratios_and_mass(col_header):
         counts[el] += num
         seen.add(el)
 
-    #calculate mass (ignore Na)
+    
     for el, num in counts.items():
         if el != 'Na':
             mass += atomic_weights.get(el,0) * num
 
-    # Step 5: calculate ratios
+    
     C = counts['C']
     H = counts['H']
     O = counts['O']
@@ -754,7 +773,7 @@ def get_ratios_and_mass(col_header):
 
 #this fuction is to extract the formula for the label
 def extract_formula(col_header):
-    # Find the first substring starting with C
+    
     adduct_matches = re.findall(r'\(([A-Za-z0-9]+)\)', col_header)
     pieces = []
 
@@ -764,20 +783,20 @@ def extract_formula(col_header):
             continue  # skip these
         pieces.append(adduct)
 
-    #find the main formula starting with C
+    
     match = re.search(r'C[A-Za-z0-9]*', col_header)
     if match:
         pieces.append(match.group(0))
 
-    # If nothing matched, return the raw header
+    
     if not pieces:
         return col_header
 
-    #combine into one formula string (without symbols like +/_)
+    
     formula = "".join(pieces)
     formula = re.sub(r'[^A-Za-z0-9]', '', formula)
 
-    #count the different elements
+    
     element_matches = re.findall(r'([A-Z][a-z]?)(\d*)', formula)
     valid_elements = ['C','H','O','N']
     clean_formula = ""
@@ -785,10 +804,10 @@ def extract_formula(col_header):
     for i, (el, num) in enumerate(element_matches):
         if el not in valid_elements:
             continue
-        # Ignore trailing H from OH
+        # Ignore trailing H from OH pleeeeease
         if el == 'H' and i > 0 and element_matches[i-1][0] == 'O':
             continue
-        # Default count is empty string if 1
+        
         clean_formula += f"{el}{num}"
 
     return clean_formula
@@ -818,7 +837,7 @@ for group, species_list in BnOH.items():
         vk_df.loc[len(vk_df)] = [sp, group, 'Benzyl alcohol', oc, hc, mass, osc]
 
 
-#drop NaNs
+#rop NaNs
 vk_df_clean = vk_df.dropna(subset=['Mass','OSC'])
 
 
@@ -834,7 +853,7 @@ def get_carbon_number_from_formula(col_header):
 vk_df_clean["Cnum"] = vk_df_clean["col_header"].apply(get_carbon_number_from_formula)
 
 #*********************************************************************
-#setup figure 1 with 1a: C# stackedplot and 1b: mass defect plot
+#okayokayokay setup figure 1 with 1a: C# stackedplot and 1b: mass defect plot
 #*********************************************************************
 fig, (ax1, ax2) = plt.subplots(
     2, 1, figsize=(16, 12), dpi=300, gridspec_kw={"height_ratios": [1.3, 1.35]})
@@ -907,8 +926,7 @@ secax.tick_params(axis='both', labelsize=18)
 formatter_x = CustomScalarFormatter(useMathText=True)
 formatter_x.set_scientific(True)   # prevent sci notation
 secax.xaxis.set_major_formatter(formatter_x)
-#secax.xaxis.set_major_formatter(formatter)
-#secax.yaxis.set_major_formatter(FuncFormatter(format_y_ticks))
+
 
 legend_labels = []
 for lbl in ordered_labels:
@@ -917,7 +935,7 @@ for lbl in ordered_labels:
     else:
         legend_labels.append(convert_to_latex(lbl))
         
-#ax1.legend(legend_labels, ncol=2, loc="upper right", fontsize = 18)
+
 
 from matplotlib.patches import Patch
 
@@ -961,37 +979,42 @@ for item in legend_items:
         else:
             labels.append(convert_to_latex(item))
 
-ax1.legend(handles, labels, ncol=2, fontsize=18, loc="upper right", 
-           columnspacing=0.8, handletextpad=0.3, labelspacing=0.2, frameon=True)
+ax1.legend(handles, labels, ncol=2, fontsize=18, loc="upper right",
+    columnspacing=0.8, handletextpad=0.3, labelspacing=0.2, frameon=True)
+
 
 
 # --------------------------
 # Bottom subplot = mass plot
 # --------------------------
 
-#dictionary of manual label offsets (x_offset, y_offset)
+#dictionary of manual label offsets
 manual_positions = {
     "C7H10O7": (-3, -0.22),
     "C7H8O7" : (0.5, 0.01),
-    "C5H8O4": (-5, 0.13),
+    "C5H8O4": (-15, 0.19),
     "C5H4O3": (-4.0, 0.35),
     "C7H6O3": (1.4, -0.05),
     "C6H6O2": (-18, 0),
     "C5H8O3": (3, -0.47),
     "NO2C6H5O": (1.6, 0.01),
     "C2H6O2": (-2, 0.15),
-    "C7H6O": (1.4, -0.01),
+    "C7H6O": (1.4, -0.09),
     "C4H6O6": (1.8, 0.01),
     "C7H7NO4": (0, -0.45),
-    "C4H6O3": (0.5, 0.05),
+    "C4H6O3": (-2, 0.09),
     "C8H12O7": (-3, -0.23),
     "C7H10O8": (-5, -0.23),
     "C7H8O5": (-5, -1),
     "C6H10O6": (5, -1),
     "C7H8O6": (10, -1),
     "C6H8O5": (0.5, 0.2),
-    "C2H4O2": (0.5, 0.1),
-    "C3H4O2": (0.5, 0.1)
+    "C2H4O2": (-5, 0.1),
+    "C3H4O2": (-2, 0.1),
+    "C6H6O": (-5, -0.2),
+    "C7H8O": (-5, -0.2),
+    "C7H8O4": (2, -0.1),
+    "C7H10O6": (2, -0.05),
     
     }#,   # (x_offset, y_offset)
 '''  "C7H8O6": (2, -0.17),
@@ -1033,8 +1056,15 @@ for src, sub in vk_df_clean.groupby("source"):
             color = colors_number_stacked.get(cnum, "lightgray")
 
         # Scatter point
-        ax2.scatter(row["Mass"], row["OSC"], color=color, marker=markers_md.get(src, "o"),  # marker by phase
-            s=sizes.get(src, 300), edgecolors="black", linewidths=0.4)
+        ax2.scatter(
+            row["Mass"],
+            row["OSC"],
+            color=color,
+            marker=markers_md.get(src, "o"),  # marker by phase
+            s=sizes.get(src, 300),
+            edgecolors="black",
+            linewidths=0.4
+        )
 
         # Add label
         formula_label = extract_formula(row["col_header"])
@@ -1047,15 +1077,19 @@ for src, sub in vk_df_clean.groupby("source"):
             offset_x = np.random.uniform(1.4, 1.5)
             offset_y = np.random.uniform(-0.035, 0.05)
 
-        ax2.text(row["Mass"] + offset_x, row["OSC"] + offset_y,
-            convert_to_latex(formula_label), fontsize=14, color="k")
-        
+        ax2.text(
+            row["Mass"] + offset_x,
+            row["OSC"] + offset_y,
+            convert_to_latex(formula_label),
+            fontsize=16,
+            color="k"
+        )
         labeled_formulas.add(formula_label)
         
         
         
 
-# create legend elements based on those marker and size dictionaries
+# create legend elements based on your marker and size dictionaries
 phase_legend_elements = [
     Line2D([0], [0], marker=markers_md[phase], color='w', label=phase,
            markerfacecolor='k' if phase == 'Benzyl alcohol' else '#F4F4F4',
@@ -1080,14 +1114,15 @@ plt.show()
 #SI version of the figure without the mass defect bit
 fig, ax1 = plt.subplots(figsize=(8, 6), dpi=300)
 
-#le top plot: carbon# stackedplot
+#top plot: carbon# stackedplot
 ordered_labels = []
 if "Benzyl alcohol" in carbon_grouped_df.columns:
     ordered_labels.append("Benzyl alcohol")
 
 ordered_labels += [
     c for c in carbon_grouped_df.columns
-    if c not in ["Benzyl alcohol", "SOA", "SOA_i"]]
+    if c not in ["Benzyl alcohol", "SOA", "SOA_i"]
+]
 
 if "SOA_i" in carbon_grouped_df.columns:
     ordered_labels.append("SOA_i")
@@ -1150,8 +1185,8 @@ plt.tight_layout()
 plt.show()
 
 #%%
-#this is to print carbon closure numbers in the consol ---->
-#1: 
+
+#carbon closure numbers! 
 
 BnOH = carbon_grouped_df['Benzyl alcohol']
 BnOH0 = BnOH.iloc[0]
@@ -1181,8 +1216,6 @@ valid = valid.dropna()
 valid_p = valid_p.dropna()
 valid_m = valid_m.dropna()
 
-print ("\n")
-
 def find_failure(valid, label, tol=1.0, n_consec=3):
     if len(valid) == 0:
         print(f"No valid ratio values for {label}.")
@@ -1200,9 +1233,9 @@ def find_failure(valid, label, tol=1.0, n_consec=3):
         ratio_at_failure = valid.iloc[first_idx]
 
         print(
-            f"{label}: carbon closure falls below 1 at {age_at_failure:.2f} h "
+            f"{label}: Failure at {age_at_failure:.2f} h "
             f"(ratio = {ratio_at_failure:.3f})"
-            )
+        )
 
         return exposure_at_failure, ratio_at_failure
 
@@ -1242,7 +1275,7 @@ print(f"Minus-error ratio at final OH: {ratio_minus_last:.4f}")
 
 
 
-target_age = 5  # hours, based of where central closure falls below 1
+target_age = 5  # hours
 target_exp = age_to_OHexp(target_age)
 
 nearest_idx = np.abs(ratio.index.values - target_exp).argmin()
@@ -1388,10 +1421,12 @@ plt.tight_layout()
 plt.show()
 
 #%%
-#this takes the SOA data, does a rolling average and finds the max values, OH exps and photochem ages when max
-window = 5  # rolling window size
 
-# === (1) SOA concentration ===
+#this is to look at SOA just for this exp
+
+window = 5  #rolling avg window
+
+#SOA conc
 soa_smooth_conc = carbon_grouped_df['SOA'].rolling(window=window, center=True, min_periods=1).mean()
 
 max_idx_conc = soa_smooth_conc.idxmax()
@@ -1400,10 +1435,10 @@ max_oh_exp_conc = OH_exp_for_aerosol[soa_smooth_conc.index.get_loc(max_idx_conc)
 max_age_conc = OHexp_to_age(max_oh_exp_conc)
 
 print(f"Smoothed max SOA conc: {max_soa_conc:.4f} at OH exposure: {max_idx_conc}")
-print(f"Corresponding photochemical age: {max_age_conc:.2f} hours")
+print(f"  → Corresponding photochemical age: {max_age_conc:.2f} hours")
 
 
-# === (2) SOA mass yield ===
+#SOA yield
 yields = SOA_df['SOAAMSAVGpwl_vocobs_yield']
 yields_smooth = yields.rolling(window=window, center=True, min_periods=1).mean()
 OH_exp_yield = SOA_df['OHexp']
@@ -1414,7 +1449,7 @@ max_oh_exp_yield = OH_exp_yield[yields_smooth.index.get_loc(max_idx_yield)]
 max_age_yield = OHexp_to_age(max_oh_exp_yield)
 
 print(f"Smoothed max SOA yield: {max_soa_yield:.4f} at OH exposure: {max_oh_exp_yield}")
-print(f"Corresponding photochemical age: {max_age_yield:.2f} hours")
+print(f"  → Corresponding photochemical age: {max_age_yield:.2f} hours")
 
 target_age = 20  # hours
 target_OH = age_to_OHexp(target_age)
@@ -1423,10 +1458,10 @@ yield_at_20h_smooth = np.interp(target_OH, OH_exp_yield, yields_smooth)
 print(f"Smoothed SOA yield at {target_age} hours: {yield_at_20h_smooth:.4f}")
 
 
-# === Combined subplot figure ===
+
 fig, axes = plt.subplots(2, 1, figsize=(8, 10), sharex=True)
 
-# --- Top: SOA concentration ---
+#Top= SOA concentration
 ax1 = axes[0]
 ax1.scatter(carbon_grouped_df.index, carbon_grouped_df['SOA'], label='Original SOA conc', alpha=0.3)
 ax1.scatter(carbon_grouped_df.index, soa_smooth_conc, color='steelblue', label='Smoothed SOA conc')
@@ -1434,12 +1469,10 @@ ax1.scatter(max_idx_conc, max_soa_conc, color='red', zorder=5, label='Max SOA co
 ax1.set_ylabel("SOA Concentration (ppb C)")
 ax1.legend()
 
-
-# Add secondary x-axis for photochemical age
 ax1_top = ax1.secondary_xaxis('top', functions=(OHexp_to_age, age_to_OHexp))
 ax1_top.set_xlabel("Photochemical Age (hours)")
 
-# --- Bottom: SOA mass yield ---
+#bottom = SOA mass yield
 ax2 = axes[1]
 ax2.scatter(OH_exp_yield, yields, color='m', label='SOA yield', alpha=0.3)
 ax2.scatter(OH_exp_yield, yields_smooth, color='m', label='Smoothed SOA yield')
@@ -1450,7 +1483,7 @@ ax2.set_ylim(0, 0.5)
 ax2.legend()
 
 ax2_top = ax2.secondary_xaxis('top', functions=(OHexp_to_age, age_to_OHexp))
-#ax2_top.set_xlabel("Photochemical Age (hours)")
+
 
 plt.tight_layout()
 plt.show()
