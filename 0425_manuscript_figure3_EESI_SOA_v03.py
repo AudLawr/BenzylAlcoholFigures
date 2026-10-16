@@ -377,8 +377,7 @@ eesi_ro2 = eesi_ro2[eesi_ro2["zeros"] == 0]
 #eesi_data['zeros'] = eesi_zeros['USER_DO0 monitor []']
 #eesi_data = eesi_data[eesi_data["zeros"] == 0]
 
-plt.scatter(eesi_data['time'], eesi_data['197.042044;C7H10O5Na+_pwlcorr'])
-plt.show()
+
 
 
 # Restrict to light-on/off window
@@ -393,8 +392,6 @@ eesi_ro2 = eesi_ro2.loc[
     (eesi_ro2['time'] >= lighton_dt) &
     (eesi_ro2['time'] <= lightoff_dt)]
 
-plt.scatter(eesi_data['time'], eesi_data['197.042044;C7H10O5Na+_pwlcorr'])
-plt.show()
 
 
 # Keep only columns matching desired format
@@ -417,14 +414,7 @@ eesi_data = eesi_data.resample('min').mean()
 eesi_ro2.set_index('time', inplace=True)
 eesi_ro2 = eesi_ro2.resample('min').mean()
 
-#plt.scatter(eesi_smoothed_2min.index, eesi_smoothed_2min['197.042044;C7H10O5Na+_pwlcorr'])
-plt.scatter(eesi_smoothed_2min.index, eesi_smoothed_2min['243.011138;C7H8O8Na+_pwlcorr'], label = "C7H8O8")
-#plt.scatter(eesi_smoothed_2min.index, eesi_smoothed_2min['211.021309;C7H8O6Na+_pwlcorr'])
 
-plt.legend()
-plt.xlabel("time")
-plt.ylabel("EESI cps")
-plt.show()
 
 #%%
 c3_cols = ['175.021309;C4H8NaO6+', '203.016223;C5H8NaO7+', '245.026788;C7H10O8Na+']
@@ -535,7 +525,7 @@ df_for_aerosol_OH['Time'] = merged_all_with_OC.index
 OH_exp_for_aerosol = np.array(e_time_finder(df_for_aerosol_OH['Time']), dtype=float) * OH_exp_slope 
 
 
-plt.scatter(OH_exp_for_aerosol, merged_all_with_OC['197.042044;C7H10O5Na+_pwlcorr'])
+
 #%%
 #okay EESI and SOA
 
@@ -593,12 +583,6 @@ normalized_eesi_with_OC = normalized_eesi_with_OC.loc[lighton:lightoff]
 e_time = (normalized_eesi_with_OC.index - normalized_eesi_with_OC.index[0]).total_seconds() / 60
 OHexp_normalizedEESI = e_time * OH_exp_slope
 
-
-
-plt.scatter(normalized_eesi_with_OC.index, normalized_eesi_with_OC['197.042044;C7H10O5Na+_pwlcorr'])
-#%%
-plt.scatter(OHexp_normalizedEESI, normalized_eesi_with_OC['197.042044;C7H10O5Na+_pwlcorr'])
-plt.show
 
 #%%
 
@@ -1053,7 +1037,7 @@ plt.show
 
 #%%
 window = 5
-# === this was for me to look at specific product maxes ===
+#this was for me to look at specific product maxes
 
 peak_results = []
 
@@ -1098,7 +1082,7 @@ def plot_group(ax, groups, colors_dict, title):
                        linewidth = 1.5)
     
     #ax.set_title(title)
-    ax.legend(ncol=3)
+    ax.legend(ncol=3, fontsize = 12)
     
 fig, axs = plt.subplots(2, 2, figsize=(14, 12))
 
@@ -1430,70 +1414,6 @@ ax2_top = ax2.secondary_xaxis('top', functions=(OHexp_to_age, age_to_OHexp))
 ax2_top.set_xlabel("Photochemical Age (hours)")
 
 plt.tight_layout()
-plt.show()
-
-
-#%%
-#this is for that SI figure that looks at time dependence of C7H8O6 formation
-fig, ax1 = plt.subplots(figsize=(10,5), dpi = 300)
-
-nh4_ptr_cols = [#"C7H8O_ppb_VWL", 
-                #"m107_C7H6OH_ppb_VWL", 
-                "142.086255;(NH4)C7H8O2+_ppb_VWL"]
-
-eesi_cols    = [#"211.021309;C7H8O6Na+_pwlcorr", 
-                "213.036959;C7H10NaO6+_pwlcorr",
-                "245.026788;C7H10O8Na+_pwlcorr",
-                "247.042438;C7H12O8Na+_pwlcorr",
-                "217.031873;C6H10NaO7+_pwlcorr"]
-
-col_labels = {
-    #"C7H8O_ppb_VWL": "BnOH (NH4)", 
-    #"m107_C7H6OH_ppb_VWL": "BnAld (PTR)",
-    "142.086255;(NH4)C7H8O2+_ppb_VWL": "HBnOH (NH4)",
-    "211.021309;C7H8O6Na+_pwlcorr": "EESI C7H8O6",
-    "m213_C7H10NaO6_cps_bg_corr_pwlcorr": "EESI C7H10O6",
-    "m245_C7H10O8Na_cps_bg_corr_pwlcorr": "EESI C7H8O8", 
-    "247.042438;C7H12O8Na+_pwlcorr": "EESI C7H12O8",
-    "217.031873;C6H10NaO7+_pwlcorr": "EESI C6H10O7"}
-
-color_names = {
-    #"C7H8O_ppb_VWL": "k", 
-    #"m107_C7H6OH_ppb_VWL": "#B83030",
-    "142.086255;(NH4)C7H8O2+_ppb_VWL": "#52A7F1",
-    #"211.021309;C7H8O6Na+_pwlcorr": "#FFD500",
-    "213.036959;C7H10NaO6+_pwlcorr": "darkorange",
-    "245.026788;C7H10O8Na+_pwlcorr": "c", 
-    "247.042438;C7H12O8Na+_pwlcorr": "m",
-    "217.031873;C6H10NaO7+_pwlcorr": "#3153B6"}
-
-# Plot NH4/PTR
-for col in nh4_ptr_cols:
-    ax1.scatter(merged_all['OH_exp'], merged_all[col], label=col_labels.get(col, col), color=color_names.get(col, 'grey'), s = 50)
-
-# Plot EESI on secondary y-axis
-ax2 = ax1.twinx()
-for col in eesi_cols:
-    ax2.scatter(merged_all['OH_exp'], merged_all[col], label=col_labels.get(col, col), color=color_names.get(col, 'grey'), marker="+", s = 50)
-
-# Labels
-ax1.set_xlabel("OH exposure (molec cm$^{-3}$ s)", fontsize=20)
-ax1.set_ylabel("Concentration (ppbC)", fontsize=20)
-ax2.set_ylabel("EESI intenstity (cps)", fontsize=20)
-
-# Legends outside the plot
-lines1, labels1 = ax1.get_legend_handles_labels()
-lines2, labels2 = ax2.get_legend_handles_labels()
-
-plt.legend(lines1 + lines2, labels1 + labels2, loc='center left', bbox_to_anchor=(0.16, 0.2), frameon = False, fontsize = 15)
-
-
-ax1.tick_params(axis='both', labelsize=23)
-ax2.tick_params(axis='both', labelsize=23)
-
-plt.xlim(0, 1.13e11)
-plt.ylim(0)
-plt.tight_layout()  # makes room for legend
 plt.show()
 
 
