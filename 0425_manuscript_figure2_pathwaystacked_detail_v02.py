@@ -5,6 +5,8 @@ Created on Thu Sep 25 15:43:40 2025
 @author: audlaw
 """
 
+#this script plots figures 1, and the exp 2 components of S7-13
+
 from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
 import matplotlib as mpl
@@ -258,16 +260,13 @@ OH_exp = np.array(e_time, dtype=float)*OH_exp_slope#calculates OH exposure
 
 merged_df_corr.to_csv("C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220425_benzyl_alcohol/20220425_benzyl_alcohol_50_200_bg_sub_r3_ppb.csv")
 
-#plt.scatter(OH_exp, merged_df_corr['142.086255;(NH4)C7H8O2+_ppb_total'], label = 'HBnOH')
-plt.scatter(OH_exp, merged_df_corr['m85_C4H4O2H_ppb'], label = 'C4H4O2')
-plt.scatter(OH_exp, merged_df_corr['130.049870;(NH4)C5H4O3+_ppb_total'], label = 'C5H4O3')
-plt.show()
+
 
 #%%
 #%%
 #**************************************************************
 #branching fraction corrections baybeeeeee
-#u need to come back to this one, its not accurate
+#see 0425_branching_ratio_comparison for more accurate figure
 merged_df_ohexp = merged_df_corr.copy()
 merged_df_ohexp['OH_exp'] = OH_exp
 merged_df_ohexp.to_csv("C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/Dataverse_for_upload/SI/FigureS01/20220425_gasphase_ppb.csv")
@@ -309,24 +308,10 @@ plt.legend(loc='upper right', fontsize = 12)
 plt.title(titles)
 plt.show()
 
-fig,ax = plt.subplots(figsize = (10, 6), dpi = 300)
-#ax.scatter(OH_exp, merged_df_corr['174.076084;(NH4)C7H8O4+_ppb_total'], label = 'epox', color = 'plum')
-#ax.scatter(OH_exp, merged_df_corr['m73_C3H4O2H_ppb'], label = 'frag', color = 'c')
-ax.scatter(OH_exp, merged_df_corr['140.070605;(NH4)C7H6O2+_ppb_total'], label = 'C7H6O2 nh4', color = 'steelblue')
-ax.scatter(OH_exp, merged_df_corr['m123_C7H6O2H_ppb'], label = 'C7H6O2 ptr', color = 'orange')
-#ax.scatter(OH_exp, merged_df_corr['157.060769;(NH4)(NO2)C6H5O+_ppb_total'], label = 'C6H5NO3 nh4', color = 'steelblue')
-#ax.scatter(OH_exp, merged_df_corr['m140_C6H5NO3H_ppb'], label = 'C6H5NO3 ptr', color = 'orange')
-
-plt.legend()
-plt.show
 
 
-fig,ax = plt.subplots(figsize = (10, 6), dpi = 300)
-#ax.scatter(OH_exp, merged_df_corr['m107_C7H6OH_ppb_matt'], label = 'C7H6O ptr', color = 'orange')
-ax.scatter(OH_exp, merged_df_corr['m140_C6H5NO3H_ppb'], label = 'C6H5NO3 ptr', color = 'm')
-ax.scatter(OH_exp, merged_df_corr['157.060769;(NH4)(NO2)C6H5O+_ppb_total'], label = 'C6H5O(NO2) nh4', color = 'orange')
-plt.legend()
-plt.show
+
+
 
 hbnoh_Y = HBnOH_OHcorr.nlargest(10).mean()/bnoh0
 bnald_Y = BnAld_OHcorr.nlargest(10).mean()/bnoh0
@@ -416,20 +401,6 @@ merged_index_corr = merged_df_corr.index
 merged_df_corr = merged_df_corr.reset_index()
 merged_df_corr = merged_df_corr.drop('time', axis=1)#gets rid of time axis
 #%%
-'''
-groups_corr_SOA = {
-    "Benzyl alcohol": ['C7H8O_ppb'],
-    "BnAld": ['m107_C7H6OH_ppb_matt', 'm123_C7H6O2H_ppb', '156.065520;(NH4)C7H6O3+_ppb_total', '130.049870;(NH4)C5H4O3+_ppb_total'],
-    "HBnOH": ["142.086255;(NH4)C7H8O2+_ppb_total", "128.070605;(NH4)C6H6O2+_ppb_total", '158.081170;(NH4)C7H8O3+_ppb_total',
-              'm123_C7H6O2H_ppb', '156.065520;(NH4)C7H6O3+_ppb_total'], #'174.076084;(NH4)C7H8O4+_ppb_total'],
-    "Nitroaromatic": ['m95_C6H6OH_ppb', "128.070605;(NH4)C6H6O2+_ppb_total", "157.060769;(NH4)(NO2)C6H5O+_ppb_total", 'm170_C7H7NO4H_ppb'], #'173.055683;(NH4)C6H5NO2O2+_ppb'],
-    "BPR Decomp": ['80.070605;(NH4)C2H6O2+_ppb_total', '118.049870;(NH4)C4H4O3+_ppb_total', '120.065520;(NH4)C4H6O3+_ppb_total', 
-                 '134.044784;(NH4)C4H4O4+_ppb_total', '136.060434;(NH4)C4H6O4+_ppb_total', '168.050263;(NH4)C4H6O6+_ppb_total', 
-                 '132.065520;(NH4)C5H6O3+_ppb_total', '134.081170;(NH4)C5H8O3+_ppb_total', '148.060434;(NH4)C5H6O4+_ppb_total', 
-                 '150.076084;(NH4)C5H8O4+_ppb_total', '174.076084;(NH4)C7H8O4+_ppb_total'],
-    "Unassigned": ['m45_C2H4OH_ppb', 'm61_C2H4O2H_ppb', 'm59_C3H6OH_ppb', 'm73_C3H4O2H_ppb','m71_C4H6OH_ppb', 'm85_C4H4O2H_ppb'],#, 'm47_C2H6OH_ppb'], # 'm33_CH4OH_ppb'],
-    "SOA": ['OC (ppb)']}
-'''
 
 groups_corr_SOA = { #im just rearranging the fragment groups
     "Benzyl alcohol": ['C7H8O_ppb'],
@@ -484,16 +455,7 @@ def normalize(df_to_normalize):#this functin normalizes the data
 
 normal_ppb_C_df_with_aerosol = normalize(ppb_C_df_with_aerosol)
 
-fig, ax = plt.subplots(figsize=(10, 6))
-plt.scatter(OH_exp_for_aerosol, normal_ppb_C_df_with_aerosol['134.044784;(NH4)C4H4O4+_ppb_total'], label = 'C4H4O4')
-plt.scatter(OH_exp_for_aerosol, normal_ppb_C_df_with_aerosol['136.060434;(NH4)C4H6O4+_ppb_total'], label = 'C4H6O4')
-plt.scatter(OH_exp_for_aerosol, normal_ppb_C_df_with_aerosol['168.050263;(NH4)C4H6O6+_ppb_total'], label = 'C4H6O6')
-plt.xlabel('OH exp molec cm$^{-3}$ s')
-plt.ylabel('normalized concentration')
-plt.xlim(0)
-plt.ylim(0)
-plt.legend()
-plt.show()
+
 
 #%%
 
@@ -531,7 +493,6 @@ grouped_aero_df = grouped_aero_df[cols]
 # Fill NaNs in gas-phase for stackplot use
 stackplot_df = grouped_aero_df.copy()
 stackplot_df[gas_phase_cols] = stackplot_df[gas_phase_cols].fillna(0)
-
 # Diagnostics
 print("Interpolated SOA_i count:", grouped_aero_df['SOA_i'].notna().sum())
 print("Masked rows:", mask.sum())
@@ -550,7 +511,7 @@ print(grouped_aero_df.loc[mask, ["SOA", "SOA_i"]].head())
 
 stackplot_df = grouped_aero_df.copy()
 stackplot_df[gas_phase_cols] = stackplot_df[gas_phase_cols].fillna(0) # Fill gas-phase NaNs with 0 for stacking
-stackplot_df["SOA_i"] = stackplot_df["SOA_i"].fillna(method='ffill').fillna(method='bfill')# Create plotting-friendly SOA_i (interpolated) to avoid NaN gaps
+stackplot_df["SOA_i"] = stackplot_df["SOA_i"].ffill().bfill()# Create plotting-friendly SOA_i (interpolated) to avoid NaN gaps
 plot_columns = gas_phase_cols + ["SOA"] # define columns to plot: gas-phase + SOA_i only
 
 # --- Mask SOA_i_plot where all gas-phase species are zero ---
@@ -740,10 +701,6 @@ ppb_C_df_with_aerosol_with_OH_frac = ppb_C_df_with_aerosol_with_OH_frac.set_inde
 
 #ppb_C_df_with_aerosol_with_OH_frac.to_csv("C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/Dataverse_for_upload/MainText/Figure2/20220425_TEST.csv")
 
-plt.scatter(ppb_C_df_with_aerosol_with_OH_frac.index, ppb_C_df_with_aerosol_with_OH_frac['m123_C7H6O2H_ppb'], label = "C7H6O2") #140.070605;(NH4)C7H6O2+_ppb_total
-plt.scatter(ppb_C_df_with_aerosol_with_OH_frac.index, ppb_C_df_with_aerosol_with_OH_frac['156.065520;(NH4)C7H6O3+_ppb_total'], label = "C7H6O3")
-plt.legend()
-plt.show()
 #%%
 #propagate errors at the last OH exposure point
 last_oh_exp_frac = ppb_C_df_with_aerosol_with_OH_frac.index[-1]  # <- use the DataFrame with OH index
@@ -893,241 +850,12 @@ def clean_label(col_name):
 
 
 #%%
-'''
+
 #**********************************************************
 #figure 2: stacked plots for days
 #these are in ppbC with errors applied to the final point in the series
 #**********************************************************
 
-
-fig, axes = plt.subplots(2, 3, figsize=(15, 10), sharex=False)
-axes2d = np.array(axes).reshape(2, 3)
-
-# Parameters for error bar positioning
-xmax = OH_exp_for_aerosol[-1]  # last OH exposure
-base_outside_x = 1.18e11
-x_offset_step = 0.015 * xmax  # horizontal spacing for staggered error bars
-
-
-# --- (1) First stackedplot goes in top-left (0,0) ---
-ax_main = axes2d[0, 0]
-
-labels = grouped_aero_df.columns
-
-ax_main.stackplot(stackplot_df.index, stackplot_df[plot_columns].T, labels=plot_columns, colors=stack_colors)
-
-# Error bars at second-to-last OH exposure point
-stack_heights = stackplot_df.iloc[-1].values
-errors = [group_errors.get(lbl, 0) for lbl in labels]
-
-# Compute cumulative heights to match the stackplot top
-cumulative_heights = np.cumsum(stack_heights)
-
-for i, (height, cum_height, err, color) in enumerate(zip(stack_heights, cumulative_heights, errors, stack_colors)):
-    if err == 0:
-        continue
-    err = abs(err)
-    if cum_height >= 0:
-        lower_err = min(err, abs(cum_height))
-    else:
-        lower_err = min(err, abs(cum_height))
-    staggered_x = base_outside_x + i * x_offset_step
-    # y-value for error bar = top of this stack layer
-    ax_main.errorbar(staggered_x, cum_height, yerr=[[lower_err], [err]],
-                     fmt='none', ecolor=color, capsize=1, elinewidth=3.5, clip_on=False)
-
-ax_main.set_title("Total", fontsize=16)
-ax_main.set_xlim(0, 1.15e11)
-ax_main.set_ylim(0, 310)
-ax_main.legend(fontsize = 10)
-#ax_main.set_ylabel("ppb C")
-
-# --- (2) Group subplots go in remaining 5 slots ---
-placement = {
-    "BnAld": axes2d[0, 1],
-    "HBnOH": axes2d[0, 2],
-    "Nitroaromatic": axes2d[1, 0],
-    "BPR Decomp": axes2d[1, 1],
-    "Unassigned": axes2d[1, 2]}
-
-for group_name, ax in placement.items():
-    if group_name not in groups_corr_SOA:
-        continue
-    species_list = groups_corr_SOA[group_name]
-    species_in_df = [s for s in species_list if s in ppb_C_df_with_aerosol.columns]
-    if not species_in_df:
-        continue
-
-    cmap = group_cmaps.get(group_name, cm.viridis)
-    species_colors = [cmap(i) for i in np.linspace(0.3, 0.9, len(species_in_df))]
-
-    ax.stackplot(
-        OH_exp_for_aerosol,
-        [ppb_C_df_with_aerosol[s] for s in species_in_df],
-        labels = [convert_to_latex(clean_label(s)) for s in species_in_df],
-        colors=species_colors)
-    
-    # error bars for individual species
-    species_heights  = ppb_C_df_with_aerosol[species_in_df].iloc[-1].values
-    errors = [group_contribs[group_name].get(sp, 0) for sp in species_in_df]
-   # Compute cumulative heights for the stack
-    cumulative_heights = np.cumsum(species_heights)
-
-    for i, (height, cum_height, err, color) in enumerate(zip(species_heights, cumulative_heights, errors, species_colors)):
-        if err == 0:
-            continue
-        err = abs(err)
-        if cum_height >= 0:
-            lower_err = min(err, abs(cum_height))
-        else:
-            lower_err = min(err, abs(cum_height))
-        #lower_err = min(err, height)
-        staggered_x = base_outside_x + i * x_offset_step
-        ax.errorbar(staggered_x, cum_height, yerr=[[lower_err], [err]],
-                    fmt='none', ecolor=color, capsize=1, elinewidth=3.5, clip_on=False)
-
-    
-    
-    ax.set_title(group_name, fontsize=16)
-    ax.set_xlim(0, 1.16e11)
-
-    if group_name in ["BnAld", "HBnOH"]:
-        ax.set_ylim(0, 60)
-    else:
-        ax.set_ylim(0, 21)
-
-    if group_name == "Unassigned":
-        ax.legend(fontsize=10, loc='center left', bbox_to_anchor=(-0.001, 0.8))
-    else:
-        ax.legend(fontsize=9)
-        
-        
-
-
-# global x/y labels
-fig.text(0.5, 0.04, "OH Exposure (molecules cm⁻³ s)", ha="center", fontsize=16)
-fig.text(0.05, 0.5, "Concentration (ppb C)", va="center", rotation="vertical", fontsize=16)
-
-plt.xlim(0, 1.16e11)
-plt.tight_layout(rect=[0.05, 0.05, 1, 1], w_pad=0, h_pad=-0.5)
-plt.show()
-
-
-
-
-#%%
-#plots fraction of carbon with errors applied to the final point
-fig, axes = plt.subplots(2, 3, figsize=(15, 10), sharex=False)
-axes2d = np.array(axes).reshape(2, 3)
-
-# Parameters for error bar positioning
-xmax = OH_exp_for_aerosol[-1]  # last OH exposure
-base_outside_x = 1.18e11
-x_offset_step = 0.015 * xmax  # horizontal spacing for staggered error bars
-
-
-# --- (1) First stackedplot goes in top-left (0,0) ---
-ax_main = axes2d[0, 0]
-
-labels = grouped_aero_df.columns
-
-ax_main.stackplot(stackplot_df.index, stackplot_df[plot_columns].T, labels=plot_columns, colors=stack_colors)
-
-# Error bars at second-to-last OH exposure point
-stack_heights = stackplot_df.iloc[-1].values
-errors = [group_errors.get(lbl, 0) for lbl in labels]
-
-# Compute cumulative heights to match the stackplot top
-cumulative_heights = np.cumsum(stack_heights)
-
-for i, (height, cum_height, err, color) in enumerate(zip(stack_heights, cumulative_heights, errors, stack_colors)):
-    if err == 0:
-        continue
-    lower_err = min(err, height)
-    staggered_x = base_outside_x + i * x_offset_step
-    # y-value for error bar = top of this stack layer
-    ax_main.errorbar(staggered_x, cum_height, yerr=[[lower_err], [err]],
-                     fmt='none', ecolor=color, capsize=1, elinewidth=3.5, clip_on=False)
-
-ax_main.set_title("Total", fontsize=16)
-ax_main.set_xlim(0, 1.15e11)
-ax_main.set_ylim(0, 310)
-ax_main.legend(fontsize = 10)
-#ax_main.set_ylabel("ppb C")
-
-# --- (2) Group subplots go in remaining 5 slots ---
-placement = {
-    "BnAld": axes2d[0, 1],
-    "HBnOH": axes2d[0, 2],
-    "Nitroaromatic": axes2d[1, 0],
-    "BPR Decomp": axes2d[1, 1],
-    "Unassigned": axes2d[1, 2]}
-
-
-
-for group_name, ax in placement.items():
-    if group_name not in groups_corr_SOA:
-        continue
-    species_list = groups_corr_SOA[group_name]
-    species_in_df = [s for s in species_list if s in frac_carb.columns]
-    if not species_in_df:
-        continue
-
-    cmap = group_cmaps.get(group_name, cm.viridis)
-    species_colors = [cmap(i) for i in np.linspace(0.3, 0.9, len(species_in_df))]
-
-    ax.stackplot(
-        OH_exp_for_aerosol,
-        [frac_carb[s] for s in species_in_df],
-        labels = [convert_to_latex(clean_label(s)) for s in species_in_df],
-        colors=species_colors)
-
-    # error bars for individual species
-    species_heights  = frac_carb[species_in_df].iloc[-1].values
-    errors = [group_contribs_frac[group_name].get(sp, 0) for sp in species_in_df]
-   # Compute cumulative heights for the stack
-    cumulative_heights = np.cumsum(species_heights)
-
-    for i, (height, cum_height, err, color) in enumerate(zip(species_heights, cumulative_heights, errors, species_colors)):
-        if err == 0:
-            continue
-        err = abs(err)
-        if cum_height >= 0:
-            lower_err = min(err, abs(cum_height))
-        else:
-            lower_err = min(err, abs(cum_height))
-        staggered_x = base_outside_x + i * x_offset_step
-        ax.errorbar(staggered_x, cum_height, yerr=[[lower_err], [err]],
-                    fmt='none', ecolor=color, capsize=1, elinewidth=3.5, clip_on=False)
-
-    
-    
-    ax.set_title(group_name, fontsize=16)
-    ax.set_xlim(0, 1.16e11)
-
-    if group_name in ["BnAld", "HBnOH"]:
-        ax.set_ylim(0, 0.25)
-    else:
-        ax.set_ylim(0, 0.08)
-
-    if group_name == "Unassigned":
-        ax.legend(fontsize=10, loc='center left', bbox_to_anchor=(-0.001, 0.785))
-    else:
-        ax.legend(fontsize=9)
-        
-        
-
-
-# global x/y labels
-fig.text(0.5, 0.04, "OH Exposure (molecules cm⁻³ s)", ha="center", fontsize=16)
-fig.text(0.05, 0.78, "Concentration (ppb C)", va="center", rotation="vertical", fontsize=16)
-fig.text(0.05, 0.3, "Fraction Carbon ([product]$_t$/[BnOH]$_0$)", va="center", rotation="vertical", fontsize=16)
-
-plt.xlim(0, 1.16e11)
-plt.tight_layout(rect=[0.05, 0.05, 1, 1], w_pad=1.5, h_pad=-0.5)
-plt.show()
-
-'''
 
 #%%
 #THIS IS THE MANUSCRIPT ONE
@@ -1448,27 +1176,23 @@ ax_main.set_title("Total Carbon Distribution", fontsize=16)
 plt.tight_layout()
 plt.show()
 
-#%%
-
-plt.scatter(OH_exp_for_aerosol, frac_carb['128.070605;(NH4)C6H6O2+_ppb_total'])
 
 #%%
-# =====================================================
-# (2) Loop over 5 group-specific plots
-# =====================================================
+
+# this loops over the groups and plots them adding each species
 remove_species = [
     '''
     "134.044784;(NH4)C4H4O4+_ppb_total",
     "168.050263;(NH4)C4H6O6+_ppb_total",
     '150.076084;(NH4)C5H8O4+_ppb_total',
     '174.076084;(NH4)C7H8O4+_ppb_total', 
-    # add more here…'''
+    '''
 ]
 
 
 # Groups to iterate over
-#group_order = ["BnAld", "HBnOH", "Nitroaromatic", "BPR Decomp", "Unassigned"]
-group_order = ["Nitroaromatic"]
+group_order = ["BnAld", "HBnOH", "Nitroaromatic", "BPR Decomp", "Unassigned"]
+#group_order = ["Nitroaromatic"]
 
 for group_name in group_order:
     if group_name not in groups_corr_SOA:
@@ -1551,97 +1275,3 @@ for group_name in group_order:
         plt.tight_layout()
         plt.show()
         
-#%%
-
-group_order = ["BPR Decomp"]
-
-for group_name in group_order:
-    if group_name not in groups_corr_SOA:
-        continue
-
-    species_list = groups_corr_SOA[group_name]
-    species_in_df = [s for s in species_list if s in frac_carb.columns and s not in remove_species]
-    selected_species = [
-     'm85_C4H4O2H_ppb',
-     '134.044784;(NH4)C4H4O4+_ppb_total',
-     '136.060434;(NH4)C4H6O4+_ppb_total',
-     '132.065520;(NH4)C5H6O3+_ppb_total',
-    ]
-    
-    # keep only selected species that exist
-    species_in_df = [s for s in selected_species if s in species_in_df]
-    
-    n_species = len(species_in_df)
-    if n_species == 0:
-        continue
-
-    cmap = group_cmaps.get(group_name, cm.viridis)
-    color_list = [cmap(i) for i in np.linspace(0.3, 0.9, n_species)]
-
-    # --- Loop through 1 product → all products ---
-    for n in range(1, n_species + 1):
-        subset = species_in_df[:n]
-        subset_colors = color_list[:n]
-
-        fig, ax = plt.subplots(figsize=(10, 7), dpi=300)
-        ax.stackplot(
-            OH_exp_for_aerosol,
-            [frac_carb[s] for s in subset],
-            labels=[convert_to_latex(clean_label(s)) for s in subset],
-            colors=subset_colors
-        )
-
-        # --- Add error bars for this subset ---
-        stack_sum = frac_carb[subset].sum(axis=1)
-        max_idx = stack_sum.idxmax()
-        species_heights = frac_carb.loc[max_idx, subset].values
-        errors = [group_contribs_frac[group_name].get(sp, 0) for sp in subset]
-        cumulative_heights = np.cumsum(species_heights)
-
-        for i, (height, cum_height, err, color) in enumerate(zip(species_heights, cumulative_heights, errors, subset_colors)):
-            if err == 0:
-                continue
-            err = abs(err)
-            if cum_height >= 0:
-                lower_err = min(err, abs(cum_height))
-            else:
-                lower_err = min(err, abs(cum_height))
-            staggered_x = base_outside_x + i * x_offset_step_detail
-            ax.errorbar(staggered_x, cum_height, yerr=[[lower_err], [err]],
-                        fmt='none', ecolor=color, capsize=1, elinewidth=3.5, clip_on=False)
-
-        # --- Axis formatting ---
-        ax.set_xlim(0, 1.16e11)
-        ax.set_ylim(0)#, 0.25 if group_name in ["BnAld", "HBnOH"] else 0.08)
-        ax.legend(fontsize=18)
-        ax.set_xlabel("OH Exposure (molecules cm⁻³ s)", fontsize=16)
-        ax.set_ylabel("Fraction Carbon", fontsize=20)
-        
-        class CustomScalarFormatter(ScalarFormatter):
-            def __call__(self, x, pos=None):
-                if x == 0.0:
-                    return "0"
-                return super().__call__(x, pos)
-         
-        def format_y_ticks(value, pos):
-            if value == 0:
-                return "0"
-            return f"{value:.4f}"  # two decimal places for all other ticks
-
-        formatter_x = CustomScalarFormatter(useMathText=True)
-        formatter_x.set_scientific(True)   # prevent sci notation
-        ax.xaxis.set_major_formatter(formatter_x)
-        ax.yaxis.set_major_formatter(FuncFormatter(format_y_ticks))
-        
-
-        
-        ax.tick_params(axis='both', which='both', labelsize=20)
-        
-        #ax.set_title(f"{group_name} Pathway: First {n} Products", fontsize=15)
-
-        # --- Add top x-axis for photochemical age ---
-        secax = ax.secondary_xaxis('top', functions=(OHexp_to_age, age_to_OHexp))
-        secax.set_xlabel("Photochemical Age (hours)", fontsize=20)
-
-        plt.tight_layout()
-        plt.show()
