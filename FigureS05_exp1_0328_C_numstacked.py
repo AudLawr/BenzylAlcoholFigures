@@ -5,6 +5,7 @@ Created on Fri Sep 19 09:30:40 2025
 @author: audlaw
 """
 
+#Exp 1 figure S5
 
 from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
@@ -17,17 +18,16 @@ import matplotlib.cm as cm
 
 mpl.rcParams.update({'font.size': 18})
 
-titles = "0706" #this is to distinguish experiments
+titles = "0328" #this is to distinguish experiments
 
 #load in files. could do this with a json?
-NH4_file = "C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220706_benzyl_alcohol/Python_analysis/20220706_BnOH_NH4_ppb_r2.csv" #NH4 quantified with vscans
-PTR_file = "C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220706_benzyl_alcohol/Python_analysis/20220706_BnOH_PTR_ppb.csv" #PTR quantified with kptr
-OH_exp_file = "C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220706_benzyl_alcohol/Python_analysis/0706SOAamssum.csv"
-SOA_data = "C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220706_benzyl_alcohol/Python_analysis/0706SOAamssum.csv"
-bnoh_ppb_data_source = "C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220706_benzyl_alcohol/20220706_benzyl_alcohol_50_200_bg_sub_r2.csv" #pVOC quantified with liquid cal
+NH4_file = "C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220328_BenzylAlcohol/Python Analylsis/20220328_BnOH_NH4_ppb_r3.csv" #NH4 quantified with vscans
+PTR_file = "C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220328_BenzylAlcohol/Python Analylsis/20220328_BnOH_PTR_ppb.csv" #PTR quantified with kptr
+OH_exp_file = "C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220328_BenzylAlcohol/Python Analylsis/0328SOAamssum.csv"
+SOA_data = "C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220328_BenzylAlcohol/Python Analylsis/0328SOAamssum.csv"
+bnoh_ppb_data_source = "C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220328_BenzylAlcohol/20220328_benzyl_alcohol_50_200_bg_sub_r4.csv" #pVOC quantified with liquid cal
 vapor_pressure_set = "C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220425_benzyl_alcohol/Python analysis/BnOH_vapor_pressures.csv"
-relative_errors = "C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220706_benzyl_alcohol/Python_analysis/20220706_BnOH_linear_errors.csv"
-ams_file = "C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220706_benzyl_alcohol/Python_analysis/SCENTSII-AMS_Chamber_20220706_RA.csv"
+relative_errors = "C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220328_BenzylAlcohol/Python Analylsis/20220328_BnOH_linear_errors.csv"
 
 
 #make dataframes
@@ -38,16 +38,15 @@ SOA_df = pd.read_csv(SOA_data, header = 0)
 bnoh_ppb = pd.read_csv(bnoh_ppb_data_source)
 vapor_pressures = pd.read_csv(vapor_pressure_set)
 rel_err_df = pd.read_csv(relative_errors)
-ams_df = pd.read_csv(ams_file)
 
 #load in lightson/off then convert to datetime
-lighton = '2022-07-06 11:24:00'
-lightoff = '2022-07-06 15:21:00'
+lighton = '2022-03-28 10:54:00'
+lightoff = '2022-03-28 15:55:00'
 lighton_dt = datetime.strptime(lighton, "%Y-%m-%d %H:%M:%S") 
 lightoff_dt = datetime.strptime(lightoff, "%Y-%m-%d %H:%M:%S")
 
 #calculate prelighton average
-lighton_dt_minus_5 = lighton_dt - timedelta(minutes=1)
+lighton_dt_minus_5 = lighton_dt - timedelta(minutes=5)
 
 #find elapsed time from datetime for OH exposure and VWL estimates
 def elapsed_minutes(time_list):
@@ -115,7 +114,7 @@ NH4_ppb_df_deltaC = NH4_ppb_df-NH4_ppb_df_pre_light_on_mean   #making dataframe 
 #***************************************
 #all the same steps but for PTR
 PTR_ppb_df['t_start'] = pd.to_datetime(PTR_ppb_df['t_start'])
-PTR_ppb_df['t_start'] = PTR_ppb_df['t_start'] - pd.to_timedelta(0, unit='h')#convert to local time
+PTR_ppb_df['t_start'] = PTR_ppb_df['t_start'] - pd.to_timedelta(6, unit='h')#convert to local time
 PTR_ppb_df_pre_light_on = PTR_ppb_df.loc[PTR_ppb_df['t_start'] >=lighton_dt_minus_5]
 PTR_ppb_df_pre_light_on = PTR_ppb_df_pre_light_on.loc[PTR_ppb_df_pre_light_on['t_start'] <=lighton_dt]
 PTR_ppb_df = PTR_ppb_df.loc[PTR_ppb_df['t_start'] <=lightoff]#removes data after lights off
@@ -221,7 +220,7 @@ for col in loss_nh4.columns:
             loss_nh4[total_col] = loss_nh4[base_col] + loss_nh4[col]
 loss_nh4 = loss_nh4[[c for c in loss_nh4.columns if c.endswith('_total') or c == 'time']]
 
-#%%
+
 #*****************************************************************************************
 #make a copy so I know which corrections have been applied
 #at this point, it should be VWL corrected change in concentration
@@ -266,9 +265,9 @@ VWLdf = merged_df_corr.copy()
 def is_valid_species(col):
     # formulas with format "mass;(...formula...)+_ppb_total"
     NH4_pattern = r"^\d+\.\d+;.*_ppb_total$"
-    # formulas with format "mXX..formula...ppb"
-    PTR_pattern = r"^m\d+\.\d+\.\.[A-Za-z0-9]+\.\.\.ppb.$"
-    special_pattern = r"^m\d+\.\d+\.\.[A-Za-z0-9]+\.\.\.ppb._corr$"
+    # formulas with format "mXX_formula_ppb"
+    PTR_pattern = r"^m\d+_.+_ppb$"
+    special_pattern = r"^m\d+_.+_ppb_matt$"
     bnoh_pattern = "C7H8O_ppb"
     
     return re.match(NH4_pattern, col) or re.match(PTR_pattern, col) or re.match(special_pattern, col) or re.match(bnoh_pattern, col)
@@ -276,35 +275,24 @@ def is_valid_species(col):
 exclude_species = ["124.075690;(NH4)C7H6O+_ppb_total",  "m107_C7H6OH_ppb", 'm91_C7H6H_ppb'] #taking these out because theyre duplicates of the BnAld signal
 
 
-
-#species_cols = [c for c in VWLdf.columns if c != "time"]  #drop any non-time columns from grouping
 species_cols = [c for c in merged_df_corr.columns if is_valid_species(c)]
 species_cols = ["time"] + species_cols
 VWLdf_filtered_all = merged_df_corr[species_cols].copy()
 
-drop_cols = [
-    "124.075690;(NH4)C7H6O+_ppb_total",
-    "126.091340;(NH4)C7H8O+_ppb_total", 
-    "m107.049..C7H7O1...ppb.",
-    "m123.044..C7H7O2...ppb.",
-    "m117.018..C4H5O4...ppb.",
-    '157.060769;(NH4)(NO2)C6H5O+_ppb_total',
-    "173.055683;(NH4)C6H5NO2O2+_ppb_total"]
+drop_cols = ["124.075690;(NH4)C7H6O+_ppb_total", "126.091340;(NH4)C7H8O+_ppb_total", 
+             "m107_C7H6OH_ppb", "m33_CH4OH_ppb", "m42_C2H3NH_ppb", "m123_C7H6O2H_ppb"]
 
 VWLdf_filtered = VWLdf_filtered_all.drop(columns=drop_cols, errors="ignore").copy()
 
-
+#this is so all the names end with the same format
 def normalize_species_name(col):
-    # replace possible endings with "_ppb_VWL"
     col = re.sub(r"_ppb_total$", "_ppb_VWL", col)
     col = re.sub(r"_ppb_matt$", "_ppb_VWL", col)
     col = re.sub(r"_ppb$", "_ppb_VWL", col)
     return col
 
-# apply to dataframe
 VWLdf_filtered.rename(columns=normalize_species_name, inplace=True)
-
-VWLdf_filtered.to_csv("C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/quantified_signals_4Amel/20220706_BnOH_quantified_VWLcorr.csv", index=False)
+VWLdf_filtered.to_csv("C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/quantified_signals_4Amel/20220425_BnOH_quantified_VWLcorr.csv", index=False)
 
 
 #%%
@@ -337,13 +325,13 @@ def age_to_OHexp(age):
     return age * 1.5e6 * 3600
 
 
-#this is for scents2 scripts
+'''' this is for scents2 scripts
 ams_df = ams_df.loc[~ams_df.isin([-9999]).any(axis=1)].copy() #removes rows that have the LDO flag 
 ams_df['datetime'] = pd.to_datetime(ams_df[' AMS_MidPointTime Datetime'])
 ams_df.set_index('datetime', inplace=True)
-ams_df = ams_df.resample('min').mean(numeric_only=True)
+ams_df = ams_df.resample('min').mean()
 ams_df = ams_df.reset_index()
-
+'''
 
 SOA_df['Time'] = pd.to_datetime(SOA_df['Time'])
 
@@ -404,16 +392,13 @@ def is_valid_species(col):
     # formulas with format "mass;(...formula...)+_ppb_total"
     NH4_pattern = r"^\d+\.\d+;.*_ppb_total$"
     # formulas with format "mXX_formula_ppb"
-    PTR_pattern = r"^m\d+\.\d+\.\.[A-Za-z0-9]+\.\.\.ppb.$"
-    special_pattern = r"^m\d+\.\d+\.\.[A-Za-z0-9]+\.\.\.ppb._corr$"
+    PTR_pattern = r"^m\d+_.+_ppb$"
+    special_pattern = r"^m\d+_.+_ppb_matt$"
     bnoh_pattern = "C7H8O_ppb"
     
     return re.match(NH4_pattern, col) or re.match(PTR_pattern, col) or re.match(special_pattern, col) or re.match(bnoh_pattern, col)
 
-exclude_species = ["124.075690;(NH4)C7H6O+_ppb_total", "126.091340;(NH4)C7H8O+_ppb_total", "m107.049..C7H7O1...ppb.",
-                   'benzylOH_frag_ppbv (91)', 'm123.044..C7H7O2...ppb.', 'C7H8O_ppb_total',
-                   "m117.018..C4H5O4...ppb.", '146.081170;(NH4)C6H8O3+_ppb_total', '157.060769;(NH4)(NO2)C6H5O+_ppb_total',
-                   "173.055683;(NH4)C6H5NO2O2+_ppb_total"] #taking these out because theyre duplicates
+exclude_species = ["124.075690;(NH4)C7H6O+_ppb_total", "126.091340;(NH4)C7H8O+_ppb_total",  "m107_C7H6OH_ppb", 'm91_C7H6H_ppb', '140.070605;(NH4)C7H6O2+_ppb_total', 'm47_C2H6OH_ppb'] #taking these out because theyre duplicates or bad
 
 
 
@@ -421,10 +406,8 @@ species_cols = [c for c in df.columns if c != "time"]  #drop any non-time column
 species_cols = [c for c in merged_df_corr.columns if is_valid_species(c)]
 species_cols = [c for c in species_cols if c not in exclude_species]
 df_filtered = merged_df_corr[species_cols].copy()
-#df_filtered = df_filtered.dropna(subset = species_cols, how ='any')
 
 
-#%%
 carbon_groups = {}
 primary = {"C7H8O_ppb": "Benzyl alcohol"}
 for col in species_cols:
@@ -461,7 +444,7 @@ for cnum, cols in sorted(carbon_groups.items()):
     if cols:
         carbon_grouped_df[f"C{cnum}"] = df_filtered[cols].sum(axis=1)
 
-#%%   
+    
 #build a dictionary of whats in which group so later you can propagate errors correctly
 
 group_to_species = {}
@@ -491,7 +474,7 @@ carbon_grouped_with_SOA = carbon_grouped_with_SOA.rename(columns={"OC (ppb)": "S
 labels = carbon_grouped_with_SOA.columns
 carbon_grouped_df = carbon_grouped_df.dropna(axis=1, how="all")
 carbon_grouped_df = carbon_grouped_df.loc[:, (carbon_grouped_df != 0).any(axis=0)]
-#%%
+
 #This section takes the carbon grouped df and multiplies each section by carbon # to get ppbC
 
 #BnOH multiplication
@@ -583,7 +566,7 @@ ppb_C_df_with_aerosol_with_OH["OH_exp"] = OH_exp_for_aerosol
 ppb_C_df_with_aerosol_with_OH = ppb_C_df_with_aerosol_with_OH.set_index("OH_exp")
 
 #propagate errors at the last OH exposure point
-last_oh_exp = ppb_C_df_with_aerosol_with_OH.index[-4]  # <- use the DataFrame with OH index
+last_oh_exp = ppb_C_df_with_aerosol_with_OH.index[-2]  # <- use the DataFrame with OH index
 
 
 group_errors = {}      # absolute errors
@@ -623,7 +606,7 @@ for group in group_contribs:
 
 #manually adding in SOA error based off of what tucker said shantanu said the error was (40%)
 if "SOA" in carbon_grouped_df.columns:
-    last_soa = carbon_grouped_df.loc[carbon_grouped_df.index[-3], "SOA"]
+    last_soa = carbon_grouped_df.loc[carbon_grouped_df.index[-1], "SOA"]
     group_errors["SOA"] = last_soa * 0.4
 
     '''
@@ -644,11 +627,20 @@ for group in carbon_grouped_df.columns:
 
 
 #make a color dictionary for carbon# stackedplot
-
+'''
 colors_number_stacked = {
     "Benzyl alcohol": "k",
-    "C1": "#1458B6",
-    "C2": "#2E5BA3", 
+    "C2": "#1D3557", 
+    "C3": "#234153", 
+    "C4": "#284C4E", 
+    "C5": "#336244", 
+    "C6": "#3E783B",
+    "C7": "#498E31",
+    "SOA": "gray" }
+'''
+colors_number_stacked = {
+    "Benzyl alcohol": "k",
+    "C2": "#1458B6", 
     "C3": "#485E8F", 
     "C4": "#7C6467", 
     "C5": "#8D665B", 
@@ -855,7 +847,7 @@ elif "SOA" in carbon_grouped_df.columns:
 ax1.stackplot(carbon_grouped_df.index, *[carbon_grouped_df[col] for col in ordered_labels],
     labels=ordered_labels, colors=[colors_number_stacked.get(lbl.split('_')[0], 'lightgray') for lbl in ordered_labels])
 
-#carbon_grouped_df.to_csv("C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/Dataverse_for_upload/SI/FigureS05/20220706_Cnum_concentration.csv")
+#carbon_grouped_df.to_csv("C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/Dataverse_for_upload/SI/FigureS05/20220328_Cnum_concentration.csv")
 
 #add error bars!!
 last_row = carbon_grouped_df.iloc[-4]
@@ -981,15 +973,16 @@ print("\n"
 "\n")
 
 
-last_idx = ratio.index[-10]
+last_idx = ratio.index[-1]
 
-ratio_central_last = ratio.iloc[-10]
-ratio_plus_last = ratio_p.iloc[-10]
-ratio_minus_last = ratio_m.iloc[-10]
+ratio_central_last = ratio.iloc[-1]
+ratio_plus_last = ratio_p.iloc[-1]
+ratio_minus_last = ratio_m.iloc[-1]
 
 print(f"Central ratio at final OH: {ratio_central_last:.4f}")
 print(f"Plus-error ratio at final OH: {ratio_plus_last:.4f}")
 print(f"Minus-error ratio at final OH: {ratio_minus_last:.4f}")
+
 
 target_age = 5  # hours
 target_exp = age_to_OHexp(target_age)
@@ -1013,7 +1006,7 @@ print("\n""\n"
     f"+{err_plus_20:.3f} / -{err_minus_20:.3f}"
 )
 
-target_age = 19.45  # hours
+target_age = 20.0  # hours
 target_exp = age_to_OHexp(target_age)
 
 nearest_idx = np.abs(ratio.index.values - target_exp).argmin()
@@ -1034,6 +1027,7 @@ print(
     f"+{err_plus_20:.3f} / -{err_minus_20:.3f}"
 "\n"
 "\n")
+        
 
 product_cols = ['C7']
 prods = carbon_grouped_df[product_cols].sum(axis=1)
@@ -1063,6 +1057,7 @@ print(f"yield - error: {ratio_C7_minus:.3f}")
 print(f"Peak C7: {C7_peak:.3f} +/- {C7_err: 2f} ppbC")
 
 print("\n")
+
 
 #%%
 
@@ -1096,10 +1091,12 @@ print(f"Smoothed max SOA yield: {max_soa_yield:.4f} at OH exposure: {max_oh_exp_
 print(f"  → Corresponding photochemical age: {max_age_yield:.2f} hours")
 
 target_age = 20  # hours
+
 target_OH = age_to_OHexp(target_age)
 yield_at_20h_smooth = np.interp(target_OH, OH_exp_yield, yields_smooth)
 
 print(f"Smoothed SOA yield at {target_age} hours: {yield_at_20h_smooth:.4f}")
+
 # === Combined subplot figure ===
 fig, axes = plt.subplots(2, 1, figsize=(8, 10), sharex=True)
 

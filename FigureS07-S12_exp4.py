@@ -18,18 +18,18 @@ from matplotlib.ticker import FuncFormatter
 
 mpl.rcParams.update({'font.size': 16})
 
-titles = "0706" #this is to distinguish experiments
+titles = "0708" #this is to distinguish experiments
 
 #load in files. could do this with a json?
-NH4_file = "C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220706_benzyl_alcohol/Python_analysis/20220706_BnOH_NH4_ppb_r2.csv" #NH4 quantified with vscans
-PTR_file = "C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220706_benzyl_alcohol/Python_analysis/20220706_BnOH_PTR_ppb.csv" #PTR quantified with kptr
-OH_exp_file = "C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220706_benzyl_alcohol/Python_analysis/0706SOAamssum.csv"
-SOA_data = "C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220706_benzyl_alcohol/Python_analysis/0706SOAamssum.csv"
-bnoh_ppb_data_source = "C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220706_benzyl_alcohol/20220706_benzyl_alcohol_50_200_bg_sub_r2.csv" #pVOC quantified with liquid cal
+NH4_file = "C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220708_benzyl_alcohol/Python_analysis/20220708_BnOH_NH4_ppb_r2.csv"
+PTR_file = "C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220708_benzyl_alcohol/Python_analysis/20220708_BnOH_PTR_ppb.csv"
+ams_file = "C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220708_benzyl_alcohol/Python_analysis/SCENTSII-AMS_Chamber_20220708_RA.csv"
+OH_exp_file = "C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220708_benzyl_alcohol/Python_analysis/0708SOAamssum.csv"
+SOA_data = "C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220708_benzyl_alcohol/Python_analysis/0708SOAamssum.csv"
+bnoh_ppb_data_source = "C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220708_benzyl_alcohol/20220708_benzyl_alcohol_50_200_bg_sub_r2.csv" #pVOC quantified with liquid cal
 vapor_pressure_set = "C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220425_benzyl_alcohol/Python analysis/BnOH_vapor_pressures.csv"
-relative_errors = "C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220706_benzyl_alcohol/Python_analysis/20220706_BnOH_linear_errors.csv"
-ams_file = "C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220706_benzyl_alcohol/Python_analysis/SCENTSII-AMS_Chamber_20220706_RA.csv"
-
+relative_errors = "C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220708_benzyl_alcohol/Python_analysis/20220708_BnOH_linear_errors.csv"
+NH4voltages = "C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220708_benzyl_alcohol/Python_analysis/20220708_benzyl_alcohol_50_200_bg_sub_r2_voltage.csv"
 
 #make dataframes
 NH4_ppb_df = pd.read_csv(NH4_file)
@@ -40,15 +40,16 @@ bnoh_ppb = pd.read_csv(bnoh_ppb_data_source)
 vapor_pressures = pd.read_csv(vapor_pressure_set)
 rel_err_df = pd.read_csv(relative_errors)
 ams_df = pd.read_csv(ams_file)
+volt_df = pd.read_csv(NH4voltages)
 
 #load in lightson/off then convert to datetime
-lighton = '2022-07-06 11:24:00'
-lightoff = '2022-07-06 15:21:00'
+lighton = '2022-07-08 11:00:00'
+lightoff = '2022-07-08 16:00:00'
 lighton_dt = datetime.strptime(lighton, "%Y-%m-%d %H:%M:%S") 
 lightoff_dt = datetime.strptime(lightoff, "%Y-%m-%d %H:%M:%S")
 
 #calculate prelighton average
-lighton_dt_minus_5 = lighton_dt - timedelta(minutes=1)
+lighton_dt_minus_5 = lighton_dt - timedelta(minutes=5)
 
 #find elapsed time from datetime for OH exposure and VWL estimates
 def elapsed_minutes(time_list):
@@ -106,16 +107,33 @@ NH4_ppb_df = NH4_ppb_df.loc[NH4_ppb_df['date_time'] >=lighton]
 NH4_ppb_df.rename(columns={'date_time': 'time'}, inplace=True)
 NH4_ppb_df.set_index('time', inplace=True)
 
+
+volt_df['date_time'] = pd.to_datetime(volt_df['date_time'])
+volt_df['date_time'] = volt_df['date_time'] - pd.to_timedelta(6, unit='h')
+volt_df.rename(columns={'date_time': 'time'}, inplace=True)
+volt_df.set_index('time', inplace=True)
+NH4_ppb_df = pd.merge_asof(
+    NH4_ppb_df.sort_index(),
+    volt_df[['PTR source voltage monitor [V]']].sort_index(),
+    left_index=True,
+    right_index=True,
+    direction='nearest',
+    tolerance=pd.Timedelta('1s')  # adjust if needed
+)
+#NH4_ppb_df = NH4_ppb_df[volt_df['PTR source voltage monitor [V]'] >= 420.4]
+NH4_ppb_df = NH4_ppb_df[NH4_ppb_df['PTR source voltage monitor [V]'] >= 420.4]
+
 #resample on 1min, calculate the mean for prelighton, then subtract from dataframe to account for starting concentrations before oxidation
 NH4_ppb_df = NH4_ppb_df.resample('min').mean()   #resamples to get the same time index for NH4 and ptr data
 NH4_ppb_df_pre_light_on = NH4_ppb_df_pre_light_on.drop('date_time', axis=1)  #droping the time column so I can find the mean
 NH4_ppb_df_pre_light_on_mean = NH4_ppb_df_pre_light_on.mean() 
 NH4_ppb_df_deltaC = NH4_ppb_df-NH4_ppb_df_pre_light_on_mean   #making dataframe change in carbon relative to lightson (deltaC)
 
+
 #***************************************
 #all the same steps but for PTR
 PTR_ppb_df['t_start'] = pd.to_datetime(PTR_ppb_df['t_start'])
-PTR_ppb_df['t_start'] = PTR_ppb_df['t_start'] - pd.to_timedelta(0, unit='h')#convert to local time
+PTR_ppb_df['t_start'] = PTR_ppb_df['t_start'] - pd.to_timedelta(0, unit='h')#dont convert to local time because scents2
 PTR_ppb_df_pre_light_on = PTR_ppb_df.loc[PTR_ppb_df['t_start'] >=lighton_dt_minus_5]
 PTR_ppb_df_pre_light_on = PTR_ppb_df_pre_light_on.loc[PTR_ppb_df_pre_light_on['t_start'] <=lighton_dt]
 PTR_ppb_df = PTR_ppb_df.loc[PTR_ppb_df['t_start'] <=lightoff]#removes data after lights off
@@ -255,9 +273,12 @@ merged_df_corr = pd.merge(merged_df, bnoh_ppb_1min[['time', 'C7H8O_ppb']], on='t
 e_time = elapsed_minutes(merged_df_corr['time'])#finds elapsed time in order to get at OH exposure
 OH_exp = np.array(e_time, dtype=float)*OH_exp_slope#calculates OH exposure 
 
+merged_df_corr.to_csv("C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220708_benzyl_alcohol/20220708_benzyl_alcohol_50_200_bg_sub_r3_ppb.csv")
 
-merged_df_corr.to_csv("C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220706_benzyl_alcohol/20220706_benzyl_alcohol_50_200_bg_sub_r2_ppb.csv")
+foramel = pd.DataFrame(merged_df_corr['157.060769;(NH4)(NO2)C6H5O+_ppb_total'])
+foramel["time"] = merged_df_corr['time']
 
+merged_df_corr['157.060769;(NH4)(NO2)C6H5O+_ppb_total'].to_csv("C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220708_benzyl_alcohol/Python_analysis/20220708_BnOH_NH4_ppb_C6H5NO3")
 
 #%%
 
@@ -322,6 +343,7 @@ merged_df_corr = merged_df_corr.drop('time', axis=1)#gets rid of time axis
 
 #%%
 
+
 groups_corr_SOA = { #im just rearranging the fragment groups
     "Benzyl alcohol": ['C7H8O_ppb'],
     "BnAld": ['m107.049..C7H7O1...ppb._corr', 'm123.044..C7H7O2...ppb.', '156.065520;(NH4)C7H6O3+_ppb_total', '130.049870;(NH4)C5H4O3+_ppb_total'],
@@ -365,12 +387,12 @@ df_for_aerosol_OH['Time'] = ppb_C_df_with_aerosol.index
 OH_exp_for_aerosol = np.array(elapsed_minutes(df_for_aerosol_OH['Time']), dtype=float) * OH_exp_slope 
 
 
-
 def normalize(df_to_normalize):#this functin normalizes the data
     normalized_df = (df_to_normalize-df_to_normalize.min())/(df_to_normalize.max()-df_to_normalize.min())
     return normalized_df
 
 normal_ppb_C_df_with_aerosol = normalize(ppb_C_df_with_aerosol)
+
 
 #%%
 
@@ -799,7 +821,7 @@ for col in plot_columns:  # plot_columns = gas_phase_cols + ["SOA_i"]
 
 ax_main.stackplot(stackplot_df.index, stackplot_df[plot_columns].T, labels=labels, colors=stack_colors)
 
-#stackplot_df.to_csv("C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/Dataverse_for_upload/SI/FigureS06-S11/20220706_pathway_concentration.csv")
+#stackplot_df.to_csv("C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/Dataverse_for_upload/SI/FigureS06-S11/20220708_pathway_concentration.csv")
 
 
 errors = [group_errors.get(lbl, 0) for lbl in labels]
@@ -945,7 +967,7 @@ for group_name, ax in placement.items():
     
     add_photochem_age_axis(ax, label=False)
     
-    if group_name in ["BnAld", "HBnOH"]:
+    if group_name in ["BnAld", "HBnOH", "Unassigned"]:
         ax.set_ylim(0, 0.45)
     else:
         ax.set_ylim(0, 0.2)
@@ -953,7 +975,7 @@ for group_name, ax in placement.items():
     if group_name == "Unassigned":
         ax.legend(title = group_name, title_fontsize=11, fontsize=10, loc='center left', bbox_to_anchor=(-0.001, 0.755))
     elif group_name == "BnAld":
-        ax.legend(title=group_name, title_fontsize=11, fontsize=10, loc='center left', bbox_to_anchor=(-0.001, 0.823))
+        ax.legend(title=group_name, title_fontsize=11, fontsize=10, loc='center left', bbox_to_anchor=(0.655, 0.823))
     elif group_name == "BPR Decomp":   # ← ONLY this one gets 2 columns
         ax.legend(title=group_name,
                   title_fontsize=11,
@@ -972,7 +994,7 @@ fig.text(0.05, 0.3, "Fraction Carbon", va="center", rotation="vertical", fontsiz
 fig.text(0.365, 0.78, "Fraction Carbon", va="center", rotation="vertical", fontsize=16)
 # fig.text(0.1, 0.365, "365 PARTY GIRL", va="center", rotation="horizontal", fontsize=160, weight = "bold", color = "#69FF23") # ([product]$_t$/[BnOH]$_0$)
 
-#ppb_C_df_with_aerosol_with_OH_frac.to_csv("C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/Dataverse_for_upload/SI/FigureS06-S11/20220706_products_fraction_carbon.csv")
+#ppb_C_df_with_aerosol_with_OH_frac.to_csv("C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/Dataverse_for_upload/SI/FigureS06-S11/20220708_products_fraction_carbon.csv")
 
 
 plt.xlim(0, 2e11)

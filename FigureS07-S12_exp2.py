@@ -18,17 +18,16 @@ from matplotlib.ticker import FuncFormatter
 
 mpl.rcParams.update({'font.size': 16})
 
-titles = "0328" #this is to distinguish experiments
+titles = "0425" #this is to distinguish experiments
 
 #load in files. could do this with a json?
-NH4_file = "C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220328_BenzylAlcohol/Python Analylsis/20220328_BnOH_NH4_ppb_r3.csv" #NH4 quantified with vscans
-PTR_file = "C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220328_BenzylAlcohol/Python Analylsis/20220328_BnOH_PTR_ppb.csv" #PTR quantified with kptr
-OH_exp_file = "C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220328_BenzylAlcohol/Python Analylsis/0328SOAamssum.csv"
-SOA_data = "C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220328_BenzylAlcohol/Python Analylsis/0328SOAamssum.csv"
-bnoh_ppb_data_source = "C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220328_BenzylAlcohol/20220328_benzyl_alcohol_50_200_bg_sub_r4.csv" #pVOC quantified with liquid cal
+NH4_file = "C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220425_benzyl_alcohol/Python analysis/20220425_BnOH_NH4_ppb_r3.csv" #NH4 quantified with vscans
+PTR_file = "C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220425_benzyl_alcohol/Python analysis/20220425_BnOH_PTR_ppb.csv" #PTR quantified with kptr
+OH_exp_file = "C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220425_benzyl_alcohol/Python analysis/0425SOAamssum.csv"
+SOA_data = "C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220425_benzyl_alcohol/Python analysis/0425SOAamssum.csv"
+bnoh_ppb_data_source = "C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220425_benzyl_alcohol/20220425_benzyl_alcohol_50_200_bg_sub_r4.csv" #pVOC quantified with liquid cal
 vapor_pressure_set = "C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220425_benzyl_alcohol/Python analysis/BnOH_vapor_pressures.csv"
-relative_errors = "C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220328_BenzylAlcohol/Python Analylsis/20220328_BnOH_linear_errors.csv"
-
+relative_errors = "C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220425_benzyl_alcohol/Python analysis/20220425_BnOH_linear_errors.csv"
 
 #make dataframes
 NH4_ppb_df = pd.read_csv(NH4_file)
@@ -40,8 +39,8 @@ vapor_pressures = pd.read_csv(vapor_pressure_set)
 rel_err_df = pd.read_csv(relative_errors)
 
 #load in lightson/off then convert to datetime
-lighton = '2022-03-28 10:54:00'
-lightoff = '2022-03-28 15:55:00'
+lighton = '2022-04-25 10:50:00'
+lightoff = '2022-04-25 15:55:00'
 lighton_dt = datetime.strptime(lighton, "%Y-%m-%d %H:%M:%S") 
 lightoff_dt = datetime.strptime(lightoff, "%Y-%m-%d %H:%M:%S")
 
@@ -78,12 +77,13 @@ def convert_to_latex(formula):#this is used to generate subscripts for formulas 
     formula_with_latex = re.sub(pattern, lambda match: ''.join(subscript_dict[digit] for digit in match.group()), formula)
     return formula_with_latex
 
-from matplotlib.ticker import ScalarFormatter
-class CustomScalarFormatter(ScalarFormatter):
-    def __call__(self, x, pos=None):
-        if x == 0.0:
-            return "0"
-        return super().__call__(x, pos)
+
+#this makes the origins 0 instead of 0.0
+sf = ScalarFormatter(useMathText=True)
+def format_ticks(value, pos):
+    if value == 0:
+        return "0"
+    return sf.format_data(value)
 
 #calculate OH exposure slope from Huiying's SOA data file
 OH_exp_data = pd.read_csv(OH_exp_file)
@@ -104,11 +104,14 @@ NH4_ppb_df = NH4_ppb_df.loc[NH4_ppb_df['date_time'] >=lighton]
 NH4_ppb_df.rename(columns={'date_time': 'time'}, inplace=True)
 NH4_ppb_df.set_index('time', inplace=True)
 
+
+
 #resample on 1min, calculate the mean for prelighton, then subtract from dataframe to account for starting concentrations before oxidation
 NH4_ppb_df = NH4_ppb_df.resample('min').mean()   #resamples to get the same time index for NH4 and ptr data
 NH4_ppb_df_pre_light_on = NH4_ppb_df_pre_light_on.drop('date_time', axis=1)  #droping the time column so I can find the mean
 NH4_ppb_df_pre_light_on_mean = NH4_ppb_df_pre_light_on.mean() 
 NH4_ppb_df_deltaC = NH4_ppb_df-NH4_ppb_df_pre_light_on_mean   #making dataframe change in carbon relative to lightson (deltaC)
+
 
 
 #***************************************
@@ -255,10 +258,6 @@ e_time = elapsed_minutes(merged_df_corr['time'])#finds elapsed time in order to 
 OH_exp = np.array(e_time, dtype=float)*OH_exp_slope#calculates OH exposure 
 
 
-merged_df_corr.to_csv("C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220328_BenzylAlcohol/20220328_benzyl_alcohol_50_200_bg_sub_r3_ppb.csv")
-
-
-
 
 #%%
 
@@ -320,13 +319,27 @@ merged_index_corr = merged_df_corr.index
 merged_df_corr = merged_df_corr.reset_index()
 merged_df_corr = merged_df_corr.drop('time', axis=1)#gets rid of time axis
 #%%
+'''
+groups_corr_SOA = {
+    "Benzyl alcohol": ['C7H8O_ppb'],
+    "BnAld": ['m107_C7H6OH_ppb_matt', 'm123_C7H6O2H_ppb', '156.065520;(NH4)C7H6O3+_ppb_total', '130.049870;(NH4)C5H4O3+_ppb_total'],
+    "HBnOH": ["142.086255;(NH4)C7H8O2+_ppb_total", "128.070605;(NH4)C6H6O2+_ppb_total", '158.081170;(NH4)C7H8O3+_ppb_total',
+              'm123_C7H6O2H_ppb', '156.065520;(NH4)C7H6O3+_ppb_total'], #'174.076084;(NH4)C7H8O4+_ppb_total'],
+    "Nitroaromatic": ['m95_C6H6OH_ppb', "128.070605;(NH4)C6H6O2+_ppb_total", "157.060769;(NH4)(NO2)C6H5O+_ppb_total", 'm170_C7H7NO4H_ppb'], #'173.055683;(NH4)C6H5NO2O2+_ppb'],
+    "BPR Decomp": ['80.070605;(NH4)C2H6O2+_ppb_total', '118.049870;(NH4)C4H4O3+_ppb_total', '120.065520;(NH4)C4H6O3+_ppb_total', 
+                 '134.044784;(NH4)C4H4O4+_ppb_total', '136.060434;(NH4)C4H6O4+_ppb_total', '168.050263;(NH4)C4H6O6+_ppb_total', 
+                 '132.065520;(NH4)C5H6O3+_ppb_total', '134.081170;(NH4)C5H8O3+_ppb_total', '148.060434;(NH4)C5H6O4+_ppb_total', 
+                 '150.076084;(NH4)C5H8O4+_ppb_total', '174.076084;(NH4)C7H8O4+_ppb_total'],
+    "Unassigned": ['m45_C2H4OH_ppb', 'm61_C2H4O2H_ppb', 'm59_C3H6OH_ppb', 'm73_C3H4O2H_ppb','m71_C4H6OH_ppb', 'm85_C4H4O2H_ppb'],#, 'm47_C2H6OH_ppb'], # 'm33_CH4OH_ppb'],
+    "SOA": ['OC (ppb)']}
+'''
 
 groups_corr_SOA = { #im just rearranging the fragment groups
     "Benzyl alcohol": ['C7H8O_ppb'],
     "BnAld": ['m107_C7H6OH_ppb_matt', 'm123_C7H6O2H_ppb', '156.065520;(NH4)C7H6O3+_ppb_total', '130.049870;(NH4)C5H4O3+_ppb_total'],
     "HBnOH": ["142.086255;(NH4)C7H8O2+_ppb_total", "128.070605;(NH4)C6H6O2+_ppb_total", '158.081170;(NH4)C7H8O3+_ppb_total',
               'm123_C7H6O2H_ppb', '156.065520;(NH4)C7H6O3+_ppb_total'], #'174.076084;(NH4)C7H8O4+_ppb_total'],
-    "Nitroaromatic": ['m95_C6H6OH_ppb', "128.070605;(NH4)C6H6O2+_ppb_total", "157.060769;(NH4)(NO2)C6H5O+_ppb_total", 'm170_C7H7NO4H_ppb'], #'173.055683;(NH4)C6H5NO2O2+_ppb'],
+    "Nitroaromatic": ['m95_C6H6OH_ppb', "128.070605;(NH4)C6H6O2+_ppb_total", "m140_C6H5NO3H_ppb", 'm170_C7H7NO4H_ppb'], #'173.055683;(NH4)C6H5NO2O2+_ppb'],
     "BPR Decomp": ['106.049870;(NH4)C3H4O3+_ppb_total', 'm85_C4H4O2H_ppb', '118.049870;(NH4)C4H4O3+_ppb_total', '122.044784;(NH4)C3H4O4+_ppb_total', '134.044784;(NH4)C4H4O4+_ppb_total', 
                    '136.060434;(NH4)C4H6O4+_ppb_total', '168.050263;(NH4)C4H6O6+_ppb_total', '132.065520;(NH4)C5H6O3+_ppb_total',
                    '148.060434;(NH4)C5H6O4+_ppb_total', '150.076084;(NH4)C5H8O4+_ppb_total', '174.076084;(NH4)C7H8O4+_ppb_total'],
@@ -486,7 +499,7 @@ ppb_C_df_with_aerosol_with_OH["OH_exp"] = OH_exp_for_aerosol
 ppb_C_df_with_aerosol_with_OH = ppb_C_df_with_aerosol_with_OH.set_index("OH_exp")
 
 #propagate errors at the last OH exposure point
-last_oh_exp = ppb_C_df_with_aerosol_with_OH.index[-2]  # <- use the DataFrame with OH index
+last_oh_exp = ppb_C_df_with_aerosol_with_OH.index[-1]  # <- use the DataFrame with OH index
 group_errors = {}
 
 group_contribs = {}  # store individual contributions
@@ -513,16 +526,16 @@ for group, contrib in group_contribs.items():
         print(f"  {sp}: {err:.4f}")
     print(f"  => Total propagated error: {group_errors[group]:.4f}\n")
 
-'''
+
 #manually adding in SOA error based off of what tucker said shantanu said the error was (40%)
 if "SOA" in grouped_aero_df.columns:
     last_soa = grouped_aero_df.loc[grouped_aero_df.index[-1], "SOA"]
     group_errors["SOA"] = last_soa * 0.4
-''' 
+    
 #manually adding in SOA error based off of what tucker said shantanu said the error was (40%)
 if "SOA_i" in grouped_aero_df.columns:
-    last_soa = grouped_aero_df.loc[grouped_aero_df.index[-2], "SOA_i"]
-    group_errors["SOA"] = last_soa * 0.4
+    last_soa = grouped_aero_df.loc[grouped_aero_df.index[-1], "SOA_i"]
+    group_errors["SOA_i"] = last_soa * 0.4
     
 #error for the frac carbon stackedplots
 frac_carb = ppb_C_df_with_aerosol/260
@@ -559,15 +572,15 @@ for group, contrib in group_contribs_frac.items():
         print(f"  {sp}: {err:.4f}")
     print(f"  => Total propagated error: {group_errors_frac[group]:.4f}\n")
 
-'''
+
 #manually adding in SOA error based off of what tucker said shantanu said the error was (40%)
 if "SOA" in grouped_aero_df.columns:
     last_soa = grouped_aero_df.loc[grouped_aero_df.index[-1], "SOA"]
     group_errors_frac["SOA"] = last_soa * 0.4
-'''
+
 if "SOA_i" in grouped_aero_df.columns:
-    last_soa = grouped_aero_df.loc[grouped_aero_df.index[-2], "SOA_i"]
-    group_errors_frac["SOA"] = last_soa * 0.4
+    last_soa = grouped_aero_df.loc[grouped_aero_df.index[-1], "SOA_i"]
+    group_errors_frac["SOA_i"] = last_soa * 0.4
 
 
 
@@ -595,48 +608,7 @@ def age_to_OHexp(age):
 labels = [c for c in stackplot_df.columns if c not in ["SOA", "SOA_i"]] + ["SOA_i"]
 plot_columns = gas_phase_cols + ["SOA_i"]
 stack_colors = [colors.get(lbl, "lightgray") for lbl in labels]
-'''
-# --- Plot stackplot ---
-fig, ax = plt.subplots(figsize=(10, 6))
-labels = [c for c in stackplot_df.columns if c not in ["SOA", "SOA_i"]] + ["SOA_i"]
-plot_columns = gas_phase_cols + ["SOA_i"]
-stack_colors = [colors.get(lbl, "lightgray") for lbl in labels]
 
-
-
-ax.stackplot(stackplot_df.index, stackplot_df[plot_columns].T, labels=plot_columns, colors=stack_colors)
-
-# --- Compute last point ±10% error ---
-last_row = grouped_aero_df.iloc[-1]
-stack_heights = np.cumsum(last_row.values)
-errors = np.array([group_errors.get(lbl, 0.5) for lbl in labels])
-# X positioning for error bars (staggered outside right edge)
-xmax = grouped_aero_df.index[-1]
-base_outside_x = xmax
-x_offset_step = 0.015 * xmax
-
-#stack_colors = [colors.get(lbl, "lightgray") for lbl in labels]
-
-for i, (height, err, color) in enumerate(zip(stack_heights, errors, stack_colors)):
-    lower_err = min(err, height)
-    staggered_x = base_outside_x + i * x_offset_step
-    ax.errorbar(staggered_x, height, yerr=[[lower_err], [err]], fmt='none',
-                ecolor=color, capsize=2, elinewidth=3, clip_on=False)
-
-secax = ax.secondary_xaxis('top', functions=(OHexp_to_age, age_to_OHexp))
-secax.set_xlabel("Photochemical Age (hr)")
-ax.set_xlabel("OH Exposure (molecules cm⁻³ s)")
-
-
-ax.set_xlim(0, 1.15e11)
-ax.set_ylabel("Concentration (ppb C)")
-ax.set_ylim(0, 310)
-#ax.set_title("0425 Benzyl Alcohol VWL corrected", fontsize=17)
-ax.legend(fontsize=12, ncol=2)  # two-column legend
-plt.tight_layout()
-#plt.title(titles)
-plt.show()
-'''
 
 #%%
 
@@ -648,7 +620,7 @@ group_cmaps = {
     "BPR Decomp": cm.Purples,
     "Unassigned": cm.Greys,
     "SOA": cm.Greys,
-    "SOA_i": cm.Oranges}
+    "SOA_i": cm.Greys}
 
 # groups to plot (exclude BnOH_VWL)
 plot_groups = [g for g in groups_corr_SOA.keys() if g != "BnOH_VWL"]
@@ -754,8 +726,6 @@ for col in plot_columns:  # plot_columns = gas_phase_cols + ["SOA_i"]
         labels.append(col)
 
 ax_main.stackplot(stackplot_df.index, stackplot_df[plot_columns].T, labels=labels, colors=stack_colors)
-
-#stackplot_df.to_csv("C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/Dataverse_for_upload/SI/FigureS06-S11/20220328_pathway_concentration.csv")
 
 errors = [group_errors.get(lbl, 0) for lbl in labels]
 
@@ -927,12 +897,12 @@ fig.text(0.05, 0.3, "Fraction Carbon", va="center", rotation="vertical", fontsiz
 fig.text(0.365, 0.78, "Fraction Carbon", va="center", rotation="vertical", fontsize=16)
 # fig.text(0.1, 0.365, "365 PARTY GIRL", va="center", rotation="horizontal", fontsize=160, weight = "bold", color = "#69FF23") # ([product]$_t$/[BnOH]$_0$)
 
-ppb_C_df_with_aerosol_with_OH_frac.to_csv("C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/Dataverse_for_upload/SI/FigureS06-S11/20220328_products_fraction_carbon.csv")
 
 
 plt.xlim(0, 2e11)
 plt.tight_layout(rect=[0.05, 0.05, 1, 1], w_pad=0, h_pad=0)
 plt.show()
+
 
 #%%
 
