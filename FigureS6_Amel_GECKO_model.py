@@ -12,12 +12,10 @@ import matplotlib.pyplot as plt
 #this plots figure S6
 
 carb_dist_time = "C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220425_benzyl_alcohol/Python analysis/20220425_gecko_carb_dist_time.csv"
-carb_aer = "C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220425_benzyl_alcohol/Python analysis/20220425_gecko_carbon_chain_aer_ppbC_time.csv"
 carb_gas = "C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220425_benzyl_alcohol/Python analysis/20220425_gecko_carbon_chain_gas_ppbC_time.csv"
 oh_exposure = "C:/Users/audlaw/OneDrive - Colostate/Desktop/CSU_Research/DataAnalysis/SCENTS/benzyl_alcohol_AL/20220425_benzyl_alcohol/Python analysis/20220425_gecko_oh_exposure.csv"
 
 total_carb = pd.read_csv(carb_dist_time, header=0).dropna()
-C3_aer = pd.read_csv(carb_aer, header=0).dropna()
 C3_gas = pd.read_csv(carb_gas, header=0).dropna()
 ohexposure = pd.read_csv(oh_exposure, header=0).dropna()
 
